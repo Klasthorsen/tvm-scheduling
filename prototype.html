@@ -658,11 +658,11 @@
         <div><div class="label">Schedule for later</div><div class="sublabel">Pick a date and time range</div></div>
       </div>
       <div class="datetime-row" id="datetime-picker">
-        <div class="datetime-label">Date</div>
-        <input type="date" class="datetime-input" value="2026-03-27" style="flex:2">
-        <div class="datetime-label" style="width:100%;margin-top:8px">Time range</div>
+        <div class="datetime-label">From</div>
+        <input type="date" class="datetime-input" value="2026-03-27">
         <input type="time" class="datetime-input" value="16:00">
-        <span style="color:var(--text-secondary);display:flex;align-items:center">–</span>
+        <div class="datetime-label" style="width:100%;margin-top:8px">To</div>
+        <input type="date" class="datetime-input" value="2026-03-27">
         <input type="time" class="datetime-input" value="19:00">
       </div>
       <button class="btn-primary" style="margin-top:12px" onclick="goToStep3()">Pin to screen</button>
