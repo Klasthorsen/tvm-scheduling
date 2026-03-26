@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TVM – Prototype B: Content-level scheduling</title>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --card: #151515;
+    --card-border: #222;
+    --text: #fff;
+    --text-secondary: #888;
+    --text-tertiary: #555;
+    --accent: #00C853;
+    --accent-dim: #00C85322;
+    --danger: #FF5252;
+    --cyan: #00BCD4;
+    --orange: #FF9800;
+    --pill-bg: #1E1E1E;
+    --overlay: rgba(0,0,0,0.85);
+    --collection-bg: #1a1a00;
+    --collection-border: #4a4a00;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    max-width: 430px; margin: 0 auto; min-height: 100vh;
+    overflow-x: hidden; position: relative;
+  }
+  .screen { display:none; flex-direction:column; min-height:100vh; padding-bottom:90px; animation:fadeIn .25s ease; }
+  .screen.active { display:flex; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  @keyframes eq { 0%{height:4px} 100%{height:16px} }
+
+  .header { display:flex; justify-content:space-between; align-items:center; padding:60px 20px 20px; }
+  .header h1 { font-size:28px; font-weight:700; }
+  .header-back { display:flex; align-items:center; gap:6px; font-size:16px; color:var(--accent); cursor:pointer; background:none; border:none; font-family:inherit; }
+  .header-back svg { width:20px; height:20px; }
+  .header-right { position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--card); border-radius:10px; cursor:pointer; }
+  .header-right .dot { position:absolute; top:6px; right:6px; width:8px; height:8px; background:var(--cyan); border-radius:50%; }
+
+  .tab-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:#111; border-top:1px solid #222; display:flex; justify-content:space-around; padding:8px 0 28px; z-index:100; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; color:var(--text-tertiary); cursor:pointer; background:none; border:none; padding:4px 12px; font-family:inherit; }
+  .tab.active { color:var(--accent); }
+  .tab svg { width:24px; height:24px; }
+
+  /* Section labels */
+  .section-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--text-tertiary); padding:0 16px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .section-header { display:flex; justify-content:space-between; align-items:center; padding:0 16px; margin-bottom:10px; }
+  .section-header .label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--text-tertiary); }
+  .section-header .action { font-size:13px; color:var(--accent); cursor:pointer; background:none; border:none; font-family:inherit; font-weight:500; }
+
+  /* Content grid in library */
+  .content-grid-lib { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:0 16px; margin-bottom:24px; }
+  .content-card { border-radius:12px; overflow:hidden; cursor:pointer; position:relative; transition:transform .15s; background:var(--card); border:1px solid var(--card-border); }
+  .content-card:active { transform:scale(.95); }
+  .content-card .thumb { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:32px; }
+  .content-card .card-label { padding:6px 8px; font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .content-card .schedule-badge { position:absolute; top:6px; right:6px; font-size:9px; background:var(--accent); color:#000; padding:2px 5px; border-radius:4px; font-weight:600; }
+  .content-card .active-dot { position:absolute; top:6px; left:6px; width:8px; height:8px; background:var(--accent); border-radius:50%; box-shadow:0 0 6px var(--accent); }
+
+  .cg-1{background:linear-gradient(135deg,#ff6b35,#ff9800)} .cg-2{background:linear-gradient(135deg,#e91e63,#9c27b0)}
+  .cg-3{background:linear-gradient(135deg,#00bcd4,#009688)} .cg-4{background:linear-gradient(135deg,#3f51b5,#2196f3)}
+  .cg-5{background:linear-gradient(135deg,#8bc34a,#4caf50)} .cg-6{background:linear-gradient(135deg,#ffc107,#ff9800)}
+  .cg-7{background:linear-gradient(135deg,#795548,#9e9e9e)} .cg-8{background:linear-gradient(135deg,#607d8b,#455a64)}
+  .cg-9{background:linear-gradient(135deg,#ff5722,#f44336)}
+
+  /* Collections row */
+  .collections-row { display:flex; gap:10px; padding:0 16px; overflow-x:auto; margin-bottom:24px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .collections-row::-webkit-scrollbar { display:none; }
+  .collection-card { width:120px; flex-shrink:0; background:var(--card); border:1px solid var(--card-border); border-radius:12px; overflow:hidden; cursor:pointer; transition:transform .15s; }
+  .collection-card:active { transform:scale(.95); }
+  .collection-card .coll-thumb { height:80px; display:flex; align-items:center; justify-content:center; font-size:28px; position:relative; }
+  .collection-card .coll-thumb .coll-count { position:absolute; bottom:4px; right:6px; font-size:10px; background:rgba(0,0,0,.6); color:#fff; padding:1px 5px; border-radius:3px; }
+  .collection-card .coll-label { padding:8px; font-size:12px; font-weight:500; }
+
+  /* Screen card */
+  .screen-card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin:0 16px 12px; padding:20px; cursor:pointer; transition:transform .15s; }
+  .screen-card:active { transform:scale(.98); }
+  .screen-card h2 { font-size:20px; font-weight:600; margin-bottom:4px; }
+  .status { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-secondary); margin-bottom:16px; }
+  .status .dot-online { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+
+  /* Now playing item in screen detail */
+  .playing-item { display:flex; align-items:center; gap:12px; background:var(--pill-bg); border-radius:12px; padding:10px 12px; margin-bottom:6px; }
+  .playing-item .p-thumb { width:44px; height:44px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .playing-item .p-info { flex:1; }
+  .playing-item .p-info .name { font-size:14px; font-weight:500; }
+  .playing-item .p-info .meta { font-size:12px; color:var(--text-secondary); }
+  .playing-item .p-actions { display:flex; gap:6px; }
+  .playing-item .p-action { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:none; border:1px solid var(--text-tertiary); color:var(--text-secondary); cursor:pointer; font-size:12px; flex-shrink:0; }
+  .playing-item .p-action:active { background:var(--danger); border-color:var(--danger); color:#fff; }
+
+  .playing-item.now-playing { border:1px solid var(--accent); }
+  .playing-item.now-playing .p-info .meta { color:var(--accent); }
+
+  .playing-item.scheduled-item { border:1px solid var(--text-tertiary); border-style:dashed; opacity:.7; }
+  .playing-item.scheduled-item .p-info .meta { color:var(--orange); }
+
+  /* Collection override banner */
+  .collection-banner { background:var(--collection-bg); border:1.5px solid var(--collection-border); border-radius:14px; margin:0 16px 16px; padding:16px; }
+  .collection-banner h3 { font-size:16px; font-weight:600; color:var(--orange); margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+  .collection-banner p { font-size:13px; color:var(--text-secondary); margin-bottom:12px; line-height:1.4; }
+  .collection-banner .coll-items { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
+  .collection-banner .coll-items::-webkit-scrollbar { display:none; }
+  .collection-banner .coll-item-thumb { width:52px; height:52px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .btn-danger-outline { width:100%; padding:12px; border-radius:10px; background:none; border:1.5px solid var(--danger); color:var(--danger); font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition:all .15s; }
+  .btn-danger-outline:active { background:var(--danger); color:#fff; }
+
+  /* Play queue link */
+  .queue-link { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; margin:0 16px 12px; background:var(--pill-bg); border-radius:12px; cursor:pointer; transition:background .15s; }
+  .queue-link:active { background:#282828; }
+  .queue-link .left { display:flex; align-items:center; gap:10px; }
+  .queue-link .left .icon { font-size:18px; }
+  .queue-link .left .label { font-size:15px; font-weight:500; }
+  .queue-link .count { font-size:13px; color:var(--text-secondary); }
+
+  /* Bottom sheet */
+  .bottom-sheet-overlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:var(--overlay); z-index:200; justify-content:center; align-items:flex-end; }
+  .bottom-sheet-overlay.active { display:flex; animation:fadeInO .2s ease; }
+  @keyframes fadeInO { from{opacity:0} to{opacity:1} }
+  .bottom-sheet { width:100%; max-width:430px; background:#1A1A1A; border-radius:20px 20px 0 0; padding:12px 20px 40px; animation:slideUp .3s ease; max-height:85vh; overflow-y:auto; }
+  .bottom-sheet .handle { width:36px; height:4px; background:var(--text-tertiary); border-radius:2px; margin:0 auto 20px; }
+  .bottom-sheet h3 { font-size:20px; font-weight:600; margin-bottom:20px; }
+
+  .btn-primary { width:100%; padding:16px; border-radius:14px; background:var(--accent); color:#000; font-size:16px; font-weight:600; border:none; cursor:pointer; transition:opacity .15s,transform .1s; font-family:inherit; }
+  .btn-primary:active { opacity:.85; transform:scale(.98); }
+  .btn-primary:disabled { opacity:.4; cursor:default; }
+  .btn-secondary { width:100%; padding:16px; border-radius:14px; background:var(--pill-bg); color:var(--text); font-size:16px; font-weight:500; border:1px solid var(--card-border); cursor:pointer; transition:opacity .15s; font-family:inherit; margin-top:8px; }
+
+  /* Schedule options */
+  .sched-option { display:flex; align-items:center; gap:12px; padding:16px; background:var(--pill-bg); border-radius:12px; margin-bottom:8px; cursor:pointer; transition:background .15s; border:1.5px solid transparent; }
+  .sched-option:active { background:#282828; }
+  .sched-option.selected { border-color:var(--accent); background:var(--accent-dim); }
+  .sched-option .icon { width:40px; height:40px; border-radius:10px; background:var(--card); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .sched-option .label { font-size:15px; font-weight:500; }
+  .sched-option .sublabel { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+
+  .datetime-row { display:none; gap:8px; margin-top:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .datetime-row.visible { display:flex; }
+  .datetime-input { flex:1; min-width:120px; padding:12px 14px; border-radius:10px; background:var(--pill-bg); border:1px solid var(--card-border); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+  .datetime-input:focus { border-color:var(--accent); }
+  .datetime-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; width:100%; }
+
+  .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--accent); color:#000; padding:12px 24px; border-radius:12px; font-size:14px; font-weight:600; z-index:300; opacity:0; transition:opacity .3s; pointer-events:none; }
+  .toast.show { opacity:1; }
+
+  .success-check { width:80px; height:80px; border-radius:50%; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; margin:40px auto 20px; font-size:36px; }
+  .success-text { text-align:center; font-size:18px; font-weight:600; margin-bottom:8px; }
+  .success-sub { text-align:center; font-size:14px; color:var(--text-secondary); margin-bottom:32px; }
+
+  .add-content-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px; border-radius:12px; border:1.5px dashed var(--text-tertiary); background:none; color:var(--text-secondary); font-size:15px; font-weight:500; cursor:pointer; transition:all .15s; font-family:inherit; }
+  .add-content-btn:active { border-color:var(--accent); color:var(--accent); }
+
+  .divider { height:1px; background:var(--card-border); margin:8px 0 16px; }
+
+  /* Screen selector pills */
+  .screen-pills { display:flex; gap:6px; padding:0 16px; margin-bottom:12px; overflow-x:auto; }
+  .screen-pill { padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500; background:var(--pill-bg); color:var(--text-secondary); cursor:pointer; border:1.5px solid transparent; white-space:nowrap; font-family:inherit; }
+  .screen-pill.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ==================== SCREEN 1: LIBRARY ==================== -->
+<div class="screen active" id="screen-library">
+  <div class="header">
+    <h1>Library</h1>
+    <div class="header-right">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="dot"></span>
+    </div>
+  </div>
+
+  <!-- Active content -->
+  <div class="section-header">
+    <span class="label">Active content</span>
+    <button class="action" onclick="showToast('Manage active')">See all</button>
+  </div>
+  <div class="content-grid-lib">
+    <div class="content-card" onclick="openContentDetail('Cocktail Promo','🍹','cg-1','active','Bar One, Bar Two')">
+      <div class="thumb cg-1"><span>🍹</span><span class="active-dot"></span></div>
+      <div class="card-label">Cocktail Promo</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('Live Music','🎶','cg-2','active','Bar One')">
+      <div class="thumb cg-2"><span>🎶</span><span class="active-dot"></span></div>
+      <div class="card-label">Live Music</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('Beer Menu','🍺','cg-3','active','Bar One, Bar Two')">
+      <div class="thumb cg-3"><span>🍺</span><span class="active-dot"></span></div>
+      <div class="card-label">Beer Menu</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('Friday Deals','🎉','cg-4','active','Bar One')">
+      <div class="thumb cg-4"><span>🎉</span><span class="active-dot"></span></div>
+      <div class="card-label">Friday Deals</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('Wine Special','🥂','cg-5','active','Bar Two')">
+      <div class="thumb cg-5"><span>🥂</span><span class="active-dot"></span></div>
+      <div class="card-label">Wine Special</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('Taco Tuesday','🌮','cg-6','active','Bar One')">
+      <div class="thumb cg-6"><span>🌮</span><span class="active-dot"></span></div>
+      <div class="card-label">Taco Tuesday</div>
+    </div>
+  </div>
+
+  <!-- Collections -->
+  <div class="section-header">
+    <span class="label">Collections</span>
+    <button class="action" onclick="showToast('Manage collections')">See all</button>
+  </div>
+  <div class="collections-row">
+    <div class="collection-card" onclick="navigateTo('screen-collection')">
+      <div class="coll-thumb cg-9"><span>🎃</span><div class="coll-count">6</div></div>
+      <div class="coll-label">Halloween</div>
+    </div>
+    <div class="collection-card" onclick="navigateTo('screen-collection-quiz')">
+      <div class="coll-thumb cg-4"><span>🧠</span><div class="coll-count">4</div></div>
+      <div class="coll-label">Quiz night</div>
+    </div>
+    <div class="collection-card" onclick="showToast('St Patrick\'s collection')">
+      <div class="coll-thumb cg-5"><span>🍀</span><div class="coll-count">5</div></div>
+      <div class="coll-label">St Patrick's</div>
+    </div>
+    <div class="collection-card" onclick="showToast('Christmas collection')">
+      <div class="coll-thumb cg-9"><span>🎄</span><div class="coll-count">8</div></div>
+      <div class="coll-label">Christmas</div>
+    </div>
+  </div>
+
+  <!-- Scheduled content -->
+  <div class="section-header">
+    <span class="label">Scheduled content</span>
+    <button class="action" onclick="showToast('Manage scheduled')">See all</button>
+  </div>
+  <div class="content-grid-lib">
+    <div class="content-card" onclick="openContentDetail('Birthday Lisa','🎂','cg-7','scheduled','Bar One · Thu 16-19')">
+      <div class="thumb cg-7"><span>🎂</span><span class="schedule-badge">Thu 16-19</span></div>
+      <div class="card-label">Birthday Lisa</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('DJ Night','🎧','cg-2','scheduled','Bar Two · Fri 20-02')">
+      <div class="thumb cg-2"><span>🎧</span><span class="schedule-badge">Fri 20-02</span></div>
+      <div class="card-label">DJ Night</div>
+    </div>
+    <div class="content-card" onclick="openContentDetail('Brunch Sun','🥞','cg-5','scheduled','Bar Two · Sun 10-14')">
+      <div class="thumb cg-5"><span>🥞</span><span class="schedule-badge">Sun 10-14</span></div>
+      <div class="card-label">Brunch Sun</div>
+    </div>
+  </div>
+
+  <!-- Inactive content -->
+  <div class="section-header">
+    <span class="label">Inactive content</span>
+    <button class="action" onclick="showToast('Manage inactive')">See all</button>
+  </div>
+  <div class="content-grid-lib">
+    <div class="content-card" style="opacity:.5" onclick="openContentDetail('Old Promo','📸','cg-8','inactive','Not active')">
+      <div class="thumb cg-8"><span>📸</span></div>
+      <div class="card-label">Old Promo</div>
+    </div>
+    <div class="content-card" style="opacity:.5" onclick="openContentDetail('Summer Drinks','🧉','cg-3','inactive','Not active')">
+      <div class="thumb cg-3"><span>🧉</span></div>
+      <div class="card-label">Summer Drinks</div>
+    </div>
+    <div class="content-card" style="opacity:.5" onclick="openContentDetail('Easter','🐣','cg-6','inactive','Not active')">
+      <div class="thumb cg-6"><span>🐣</span></div>
+      <div class="card-label">Easter</div>
+    </div>
+    <div class="content-card" style="opacity:.5" onclick="showToast('Inactive content')">
+      <div class="thumb cg-7"><span>🎤</span></div>
+      <div class="card-label">Karaoke</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 2: SCREENS (Default mode) ==================== -->
+<div class="screen" id="screen-screens">
+  <div class="header">
+    <h1>Screens</h1>
+    <div class="header-right">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </div>
+  </div>
+
+  <!-- Bar One -->
+  <div class="screen-card" onclick="navigateTo('screen-bar-one')">
+    <h2>Bar One</h2>
+    <div class="status"><span class="dot-online"></span> Online</div>
+    <div class="section-label" style="padding:0;margin-bottom:8px">Now playing</div>
+    <div class="playing-item now-playing">
+      <div class="p-thumb cg-1"><span>🍹</span></div>
+      <div class="p-info">
+        <div class="name">Cocktail Promo</div>
+        <div class="meta">Playing now</div>
+      </div>
+    </div>
+    <div class="queue-link" onclick="event.stopPropagation(); navigateTo('screen-bar-one')">
+      <div class="left">
+        <span class="icon">📋</span>
+        <span class="label">Play queue</span>
+      </div>
+      <span class="count">6 items ›</span>
+    </div>
+  </div>
+
+  <!-- Bar Two -->
+  <div class="screen-card" onclick="navigateTo('screen-bar-two')">
+    <h2>Bar Two</h2>
+    <div class="status"><span class="dot-online"></span> Online</div>
+    <div class="section-label" style="padding:0;margin-bottom:8px">Now playing</div>
+    <div class="playing-item now-playing">
+      <div class="p-thumb cg-3"><span>🍺</span></div>
+      <div class="p-info">
+        <div class="name">Beer Menu</div>
+        <div class="meta">Playing now</div>
+      </div>
+    </div>
+    <div class="queue-link" onclick="event.stopPropagation(); navigateTo('screen-bar-two')">
+      <div class="left">
+        <span class="icon">📋</span>
+        <span class="label">Play queue</span>
+      </div>
+      <span class="count">4 items ›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 3: BAR ONE DETAIL (Default mode) ==================== -->
+<div class="screen" id="screen-bar-one">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('screen-screens')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Screens
+    </button>
+    <span style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
+  </div>
+
+  <div style="padding:0 16px 12px">
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">Bar One</h1>
+    <div class="status"><span class="dot-online"></span> Online</div>
+  </div>
+
+  <!-- Collection override banner (hidden by default) -->
+  <div class="collection-banner" id="bar1-collection-banner" style="display:none">
+    <h3>🎃 Collection active</h3>
+    <p>Playing "Quiz night" collection. Regular content and scheduled items are paused while active.</p>
+    <div class="coll-items">
+      <div class="coll-item-thumb cg-4">🧠</div>
+      <div class="coll-item-thumb cg-2">🎤</div>
+      <div class="coll-item-thumb cg-5">🏆</div>
+      <div class="coll-item-thumb cg-9">🎯</div>
+    </div>
+    <button class="btn-danger-outline" onclick="deactivateCollection('bar1')">Stop collection & resume regular</button>
+  </div>
+
+  <!-- Now playing -->
+  <div class="section-label" id="bar1-now-label">▶ Now playing</div>
+  <div style="padding:0 16px;margin-bottom:16px" id="bar1-queue">
+    <div class="playing-item now-playing">
+      <div class="p-thumb cg-1"><span>🍹</span></div>
+      <div class="p-info">
+        <div class="name">Cocktail Promo</div>
+        <div class="meta">Playing now · Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused Cocktail Promo')">⏸</button>
+      </div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-2"><span>🎶</span></div>
+      <div class="p-info">
+        <div class="name">Live Music</div>
+        <div class="meta">Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused')">⏸</button>
+      </div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-4"><span>🎉</span></div>
+      <div class="p-info">
+        <div class="name">Friday Deals</div>
+        <div class="meta">Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused')">⏸</button>
+      </div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-6"><span>🌮</span></div>
+      <div class="p-info">
+        <div class="name">Taco Tuesday</div>
+        <div class="meta">Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused')">⏸</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Scheduled items -->
+    <div class="playing-item scheduled-item">
+      <div class="p-thumb cg-7"><span>🎂</span></div>
+      <div class="p-info">
+        <div class="name">Birthday Lisa</div>
+        <div class="meta">📅 Thu 27 Mar, 16:00–19:00</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();removeScheduled(this)">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div style="padding:0 16px;margin-bottom:16px">
+    <button class="add-content-btn" onclick="openAddToScreen('bar-one')">
+      <span style="font-size:18px">+</span> Add content to this screen
+    </button>
+  </div>
+
+  <!-- Play collection -->
+  <div class="section-label">📁 Play a collection</div>
+  <div class="collections-row" style="margin-bottom:16px">
+    <div class="collection-card" onclick="activateCollection('bar1','Halloween')">
+      <div class="coll-thumb cg-9"><span>🎃</span><div class="coll-count">6</div></div>
+      <div class="coll-label">Halloween</div>
+    </div>
+    <div class="collection-card" onclick="activateCollection('bar1','Quiz night')">
+      <div class="coll-thumb cg-4"><span>🧠</span><div class="coll-count">4</div></div>
+      <div class="coll-label">Quiz night</div>
+    </div>
+    <div class="collection-card" onclick="activateCollection('bar1','St Patrick\'s')">
+      <div class="coll-thumb cg-5"><span>🍀</span><div class="coll-count">5</div></div>
+      <div class="coll-label">St Patrick's</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 3b: BAR TWO DETAIL ==================== -->
+<div class="screen" id="screen-bar-two">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('screen-screens')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Screens
+    </button>
+    <span style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
+  </div>
+
+  <div style="padding:0 16px 12px">
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">Bar Two</h1>
+    <div class="status"><span class="dot-online"></span> Online</div>
+  </div>
+
+  <div class="section-label">▶ Now playing</div>
+  <div style="padding:0 16px;margin-bottom:16px">
+    <div class="playing-item now-playing">
+      <div class="p-thumb cg-3"><span>🍺</span></div>
+      <div class="p-info">
+        <div class="name">Beer Menu</div>
+        <div class="meta">Playing now · Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused')">⏸</button>
+      </div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-5"><span>🥂</span></div>
+      <div class="p-info">
+        <div class="name">Wine Special</div>
+        <div class="meta">Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused')">⏸</button>
+      </div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-1"><span>🍹</span></div>
+      <div class="p-info">
+        <div class="name">Cocktail Promo</div>
+        <div class="meta">Always on</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();showToast('Paused')">⏸</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="playing-item scheduled-item">
+      <div class="p-thumb cg-2"><span>🎧</span></div>
+      <div class="p-info">
+        <div class="name">DJ Night</div>
+        <div class="meta">📅 Fri 28 Mar, 20:00–02:00</div>
+      </div>
+      <div class="p-actions">
+        <button class="p-action" onclick="event.stopPropagation();removeScheduled(this)">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:0 16px;margin-bottom:16px">
+    <button class="add-content-btn" onclick="openAddToScreen('bar-two')">
+      <span style="font-size:18px">+</span> Add content to this screen
+    </button>
+  </div>
+
+  <div class="section-label">📁 Play a collection</div>
+  <div class="collections-row">
+    <div class="collection-card" onclick="showToast('Halloween activated on Bar Two')">
+      <div class="coll-thumb cg-9"><span>🎃</span><div class="coll-count">6</div></div>
+      <div class="coll-label">Halloween</div>
+    </div>
+    <div class="collection-card" onclick="showToast('Quiz night activated on Bar Two')">
+      <div class="coll-thumb cg-4"><span>🧠</span><div class="coll-count">4</div></div>
+      <div class="coll-label">Quiz night</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 4: COLLECTION DETAIL (Quiz night) ==================== -->
+<div class="screen" id="screen-collection-quiz">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('screen-library')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Library
+    </button>
+    <span style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
+  </div>
+  <div style="padding:0 16px 4px">
+    <h1 style="font-size:22px;font-weight:700;margin-bottom:2px">🧠 Quiz night</h1>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">4 items · Collection</p>
+  </div>
+  <div style="padding:0 16px">
+    <div class="playing-item">
+      <div class="p-thumb cg-4"><span>🧠</span></div>
+      <div class="p-info"><div class="name">Quiz Rules</div><div class="meta">Image</div></div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-2"><span>🎤</span></div>
+      <div class="p-info"><div class="name">Host Intro</div><div class="meta">Video</div></div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-5"><span>🏆</span></div>
+      <div class="p-info"><div class="name">Scoreboard</div><div class="meta">Image</div></div>
+    </div>
+    <div class="playing-item">
+      <div class="p-thumb cg-9"><span>🎯</span></div>
+      <div class="p-info"><div class="name">Round Categories</div><div class="meta">Image</div></div>
+    </div>
+    <button class="add-content-btn" style="margin-top:8px" onclick="showToast('Add to collection')">
+      <span style="font-size:18px">+</span> Add content
+    </button>
+  </div>
+
+  <div style="padding:20px 16px 0">
+    <div class="section-label" style="padding:0;margin-bottom:10px">Play on screen</div>
+    <div class="screen-pills">
+      <button class="screen-pill" onclick="this.classList.toggle('active');showToast('Bar One toggled')">Bar One</button>
+      <button class="screen-pill" onclick="this.classList.toggle('active');showToast('Bar Two toggled')">Bar Two</button>
+      <button class="screen-pill" onclick="this.classList.toggle('active');showToast('Dancefloor toggled')">Dancefloor</button>
+    </div>
+    <button class="btn-primary" onclick="showToast('Collection activated!')">Play collection now</button>
+  </div>
+</div>
+
+<!-- ==================== BOTTOM SHEET: ADD CONTENT TO SCREEN ==================== -->
+<div class="bottom-sheet-overlay" id="sheet-add-to-screen">
+  <div class="bottom-sheet">
+    <div class="handle"></div>
+    <h3>Add content to screen</h3>
+
+    <div id="ats-step-1">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Choose content from your library</p>
+      <div class="content-grid-lib" style="padding:0">
+        <div class="content-card" onclick="selectScreenContent(this)"><div class="thumb cg-1"><span>🍹</span></div><div class="card-label">Cocktail</div></div>
+        <div class="content-card" onclick="selectScreenContent(this)"><div class="thumb cg-2"><span>🎶</span></div><div class="card-label">Live Music</div></div>
+        <div class="content-card" onclick="selectScreenContent(this)"><div class="thumb cg-3"><span>🍺</span></div><div class="card-label">Beer Menu</div></div>
+        <div class="content-card" onclick="selectScreenContent(this)"><div class="thumb cg-4"><span>🎉</span></div><div class="card-label">Deals</div></div>
+        <div class="content-card" onclick="selectScreenContent(this)"><div class="thumb cg-7"><span>🎂</span></div><div class="card-label">Birthday</div></div>
+        <div class="content-card" onclick="selectScreenContent(this)"><div class="thumb cg-8"><span>📸</span></div><div class="card-label">Photo</div></div>
+      </div>
+      <button class="btn-primary" id="ats-btn-next" disabled onclick="atsGoStep2()">Next</button>
+      <button class="btn-secondary" onclick="closeAtsSheet()">Cancel</button>
+    </div>
+
+    <div id="ats-step-2" style="display:none">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">How should this content be shown?</p>
+      <div class="sched-option selected" onclick="selectSchedOption(this,'always')">
+        <div class="icon">🔄</div>
+        <div><div class="label">Always on</div><div class="sublabel">Plays in regular rotation until you remove it</div></div>
+      </div>
+      <div class="sched-option" onclick="selectSchedOption(this,'scheduled')">
+        <div class="icon">📅</div>
+        <div><div class="label">Schedule</div><div class="sublabel">Only show during a specific date and time</div></div>
+      </div>
+      <div class="datetime-row" id="ats-datetime">
+        <div class="datetime-label">Date</div>
+        <input type="date" class="datetime-input" value="2026-03-27" style="flex:2">
+        <div class="datetime-label" style="width:100%;margin-top:8px">Time range</div>
+        <input type="time" class="datetime-input" value="16:00">
+        <span style="color:var(--text-secondary);display:flex;align-items:center">–</span>
+        <input type="time" class="datetime-input" value="19:00">
+      </div>
+      <button class="btn-primary" style="margin-top:12px" onclick="atsGoStep3()">Add to screen</button>
+      <button class="btn-secondary" onclick="atsBackStep1()">Back</button>
+    </div>
+
+    <div id="ats-step-3" style="display:none">
+      <div class="success-check">✓</div>
+      <div class="success-text">Content added!</div>
+      <div class="success-sub" id="ats-success-msg">Now playing on Bar One</div>
+      <button class="btn-primary" onclick="closeAtsSheet()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BOTTOM SHEET: CONTENT DETAIL ==================== -->
+<div class="bottom-sheet-overlay" id="sheet-content-detail">
+  <div class="bottom-sheet">
+    <div class="handle"></div>
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+      <div id="cd-thumb" style="width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0"></div>
+      <div>
+        <h3 style="margin-bottom:4px" id="cd-name"></h3>
+        <p style="font-size:13px;color:var(--text-secondary)" id="cd-status"></p>
+      </div>
+    </div>
+    <div id="cd-screens" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
+    <button class="btn-primary" onclick="closeContentDetail();showToast('Edit coming soon')">Edit content</button>
+    <button class="btn-secondary" onclick="closeContentDetail()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab" onclick="showToast('Home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button class="tab" id="tab-screens" onclick="navigateTo('screen-screens');setActiveTab(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Screens
+  </button>
+  <button class="tab active" id="tab-library" onclick="navigateTo('screen-library');setActiveTab(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    Library
+  </button>
+  <button class="tab" onclick="showToast('Create')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Create
+  </button>
+  <button class="tab" onclick="showToast('More')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    More
+  </button>
+</div>
+
+<script>
+  let atsSchedMode = 'always';
+  let atsTarget = 'bar-one';
+
+  function navigateTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const t = document.getElementById(id);
+    if (t) { t.classList.add('active'); window.scrollTo(0,0); }
+  }
+
+  function setActiveTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  }
+
+  // Content detail sheet
+  function openContentDetail(name, emoji, colorClass, status, screens) {
+    const thumb = document.getElementById('cd-thumb');
+    thumb.className = colorClass;
+    thumb.innerHTML = '<span>' + emoji + '</span>';
+    document.getElementById('cd-name').textContent = name;
+    document.getElementById('cd-status').textContent = status === 'active' ? 'Active' : status === 'scheduled' ? 'Scheduled' : 'Inactive';
+    document.getElementById('cd-screens').textContent = 'Screens: ' + screens;
+    document.getElementById('sheet-content-detail').classList.add('active');
+  }
+  function closeContentDetail() {
+    document.getElementById('sheet-content-detail').classList.remove('active');
+  }
+
+  // Add to screen sheet
+  function openAddToScreen(target) {
+    atsTarget = target;
+    document.getElementById('sheet-add-to-screen').classList.add('active');
+    resetAtsSheet();
+  }
+  function closeAtsSheet() {
+    document.getElementById('sheet-add-to-screen').classList.remove('active');
+  }
+  function resetAtsSheet() {
+    document.getElementById('ats-step-1').style.display = '';
+    document.getElementById('ats-step-2').style.display = 'none';
+    document.getElementById('ats-step-3').style.display = 'none';
+    document.getElementById('ats-btn-next').disabled = true;
+    document.querySelectorAll('#sheet-add-to-screen .content-card').forEach(c => c.style.outline = '');
+    document.querySelectorAll('.sched-option').forEach(o => o.classList.remove('selected'));
+    document.querySelectorAll('.sched-option')[0].classList.add('selected');
+    document.getElementById('ats-datetime').classList.remove('visible');
+    atsSchedMode = 'always';
+  }
+  function selectScreenContent(el) {
+    document.querySelectorAll('#sheet-add-to-screen .content-card').forEach(c => c.style.outline = '');
+    el.style.outline = '2.5px solid var(--accent)';
+    document.getElementById('ats-btn-next').disabled = false;
+  }
+  function atsGoStep2() {
+    document.getElementById('ats-step-1').style.display = 'none';
+    document.getElementById('ats-step-2').style.display = '';
+  }
+  function atsBackStep1() {
+    document.getElementById('ats-step-1').style.display = '';
+    document.getElementById('ats-step-2').style.display = 'none';
+  }
+  function selectSchedOption(el, mode) {
+    atsSchedMode = mode;
+    document.querySelectorAll('.sched-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('ats-datetime').classList.toggle('visible', mode === 'scheduled');
+  }
+  function atsGoStep3() {
+    document.getElementById('ats-step-2').style.display = 'none';
+    document.getElementById('ats-step-3').style.display = '';
+    const bar = atsTarget === 'bar-one' ? 'Bar One' : 'Bar Two';
+    document.getElementById('ats-success-msg').textContent = atsSchedMode === 'always'
+      ? 'Now playing on ' + bar
+      : 'Scheduled for Thu 27 Mar, 16:00–19:00 on ' + bar;
+  }
+
+  // Collection override
+  function activateCollection(bar, name) {
+    if (bar === 'bar1') {
+      document.getElementById('bar1-collection-banner').style.display = '';
+      document.getElementById('bar1-queue').style.opacity = '.3';
+      document.getElementById('bar1-queue').style.pointerEvents = 'none';
+    }
+    showToast(name + ' collection activated!');
+  }
+  function deactivateCollection(bar) {
+    if (bar === 'bar1') {
+      document.getElementById('bar1-collection-banner').style.display = 'none';
+      document.getElementById('bar1-queue').style.opacity = '1';
+      document.getElementById('bar1-queue').style.pointerEvents = '';
+    }
+    showToast('Back to regular content');
+  }
+
+  // Remove scheduled
+  function removeScheduled(btn) {
+    const item = btn.closest('.playing-item');
+    const name = item.querySelector('.p-info .name').textContent;
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(60px)';
+    item.style.transition = 'all .25s ease';
+    setTimeout(() => { item.remove(); showToast(name + ' removed'); }, 250);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // Close sheets
+  document.getElementById('sheet-add-to-screen').addEventListener('click', function(e) { if (e.target === this) closeAtsSheet(); });
+  document.getElementById('sheet-content-detail').addEventListener('click', function(e) { if (e.target === this) closeContentDetail(); });
+</script>
+</body>
+</html>
