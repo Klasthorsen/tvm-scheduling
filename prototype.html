@@ -20,770 +20,181 @@
     --pill-bg: #1E1E1E;
     --overlay: rgba(0,0,0,0.85);
   }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    max-width: 430px;
-    margin: 0 auto;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
+    background: var(--bg); color: var(--text);
+    max-width: 430px; margin: 0 auto; min-height: 100vh;
+    overflow-x: hidden; position: relative;
   }
+  .screen { display:none; flex-direction:column; min-height:100vh; padding-bottom:90px; animation:fadeIn .25s ease; }
+  .screen.active { display:flex; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  @keyframes eq { 0%{height:4px} 100%{height:16px} }
 
-  /* Screen container */
-  .screen {
-    display: none;
-    flex-direction: column;
-    min-height: 100vh;
-    padding-bottom: 90px;
-    animation: fadeIn 0.25s ease;
-  }
-  .screen.active { display: flex; }
+  .header { display:flex; justify-content:space-between; align-items:center; padding:60px 20px 20px; }
+  .header h1 { font-size:28px; font-weight:700; }
+  .header-back { display:flex; align-items:center; gap:6px; font-size:16px; color:var(--accent); cursor:pointer; background:none; border:none; font-family:inherit; }
+  .header-back svg { width:20px; height:20px; }
+  .header-right { position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--card); border-radius:10px; cursor:pointer; }
+  .header-right .dot { position:absolute; top:6px; right:6px; width:8px; height:8px; background:var(--cyan); border-radius:50%; }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin:0 16px 12px; padding:20px; cursor:pointer; transition:transform .15s,background .15s; }
+  .card:active { transform:scale(.98); background:#1a1a1a; }
+  .card.offline { opacity:.5; }
+  .screen-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+  .screen-card-header h2 { font-size:20px; font-weight:600; }
+  .screen-card-header .dots { font-size:20px; color:var(--text-secondary); cursor:pointer; padding:4px; }
 
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
+  .status { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text-secondary); margin-bottom:16px; }
+  .status .dot-online { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+  .status .dot-offline { width:8px; height:8px; background:var(--text-tertiary); border-radius:50%; }
 
-  @keyframes slideDown {
-    from { transform: translateY(0); }
-    to { transform: translateY(100%); }
-  }
+  .currently-playing-label { font-size:12px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
 
-  /* Header */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 60px 20px 20px;
-  }
-  .header h1 { font-size: 28px; font-weight: 700; }
-  .header-back {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 16px;
-    color: var(--accent);
-    cursor: pointer;
-    background: none;
-    border: none;
-  }
-  .header-back svg { width: 20px; height: 20px; }
-  .header-right {
-    position: relative;
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--card);
-    border-radius: 10px;
-    cursor: pointer;
-  }
-  .header-right .dot {
-    position: absolute; top: 6px; right: 6px;
-    width: 8px; height: 8px;
-    background: var(--cyan);
-    border-radius: 50%;
-  }
+  .loop-row { display:flex; align-items:center; justify-content:space-between; background:var(--pill-bg); border-radius:12px; padding:14px 16px; margin-bottom:8px; cursor:pointer; transition:background .15s; }
+  .loop-row:active { background:#282828; }
+  .loop-row-left { display:flex; align-items:center; gap:10px; }
+  .loop-row .eq-icon { display:flex; gap:2px; align-items:flex-end; height:16px; }
+  .loop-row .eq-icon span { width:3px; background:var(--accent); border-radius:2px; animation:eq .8s ease-in-out infinite alternate; }
+  .loop-row .eq-icon span:nth-child(1){height:8px;animation-delay:0s}
+  .loop-row .eq-icon span:nth-child(2){height:14px;animation-delay:.2s}
+  .loop-row .eq-icon span:nth-child(3){height:10px;animation-delay:.4s}
+  .loop-row .eq-icon span:nth-child(4){height:16px;animation-delay:.1s}
+  .loop-row .name { font-size:15px; font-weight:500; }
+  .loop-row .chevron { color:var(--text-secondary); font-size:18px; }
 
-  /* Cards */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    margin: 0 16px 12px;
-    padding: 20px;
-    cursor: pointer;
-    transition: transform 0.15s, background 0.15s;
-  }
-  .card:active { transform: scale(0.98); background: #1a1a1a; }
+  .schedule-row { display:flex; align-items:center; justify-content:space-between; background:var(--pill-bg); border-radius:12px; padding:14px 16px; margin-bottom:8px; cursor:pointer; transition:background .15s; }
+  .schedule-row:active { background:#282828; }
+  .schedule-row .name { font-size:15px; font-weight:400; color:var(--text-secondary); }
+  .schedule-row .chevron { color:var(--text-secondary); font-size:18px; }
 
-  .screen-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 4px;
-  }
-  .screen-card-header h2 { font-size: 20px; font-weight: 600; }
-  .screen-card-header .dots {
-    font-size: 20px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 4px;
-  }
+  .tab-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:#111; border-top:1px solid #222; display:flex; justify-content:space-around; padding:8px 0 28px; z-index:100; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; color:var(--text-tertiary); cursor:pointer; background:none; border:none; padding:4px 12px; font-family:inherit; }
+  .tab.active { color:var(--accent); }
+  .tab svg { width:24px; height:24px; }
 
-  .status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 16px;
-  }
-  .status .dot-online { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
-  .status .dot-offline { width: 8px; height: 8px; background: var(--text-tertiary); border-radius: 50%; }
+  .detail-section { padding:0 16px; margin-bottom:20px; }
 
-  .currently-playing-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-  }
+  .section-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--text-tertiary); padding:0 16px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .section-label .pin-icon { color:var(--orange); }
 
-  .loop-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .loop-row:active { background: #282828; }
-  .loop-row-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .loop-row .eq-icon {
-    display: flex;
-    gap: 2px;
-    align-items: flex-end;
-    height: 16px;
-  }
-  .loop-row .eq-icon span {
-    width: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    animation: eq 0.8s ease-in-out infinite alternate;
-  }
-  .loop-row .eq-icon span:nth-child(1) { height: 8px; animation-delay: 0s; }
-  .loop-row .eq-icon span:nth-child(2) { height: 14px; animation-delay: 0.2s; }
-  .loop-row .eq-icon span:nth-child(3) { height: 10px; animation-delay: 0.4s; }
-  .loop-row .eq-icon span:nth-child(4) { height: 16px; animation-delay: 0.1s; }
+  /* Now playing section with loop content */
+  .now-playing-card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin:0 16px 16px; padding:16px; }
+  .now-playing-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .now-playing-header .left { display:flex; align-items:center; gap:10px; }
+  .now-playing-header .eq-icon { display:flex; gap:2px; align-items:flex-end; height:14px; }
+  .now-playing-header .eq-icon span { width:3px; background:var(--accent); border-radius:2px; animation:eq .8s ease-in-out infinite alternate; }
+  .now-playing-header .eq-icon span:nth-child(1){height:6px;animation-delay:0s}
+  .now-playing-header .eq-icon span:nth-child(2){height:12px;animation-delay:.2s}
+  .now-playing-header .eq-icon span:nth-child(3){height:8px;animation-delay:.4s}
+  .now-playing-header .eq-icon span:nth-child(4){height:14px;animation-delay:.1s}
+  .now-playing-header .loop-title { font-size:16px; font-weight:600; }
+  .now-playing-header .edit-btn { font-size:13px; color:var(--accent); cursor:pointer; background:none; border:none; font-family:inherit; font-weight:500; }
 
-  @keyframes eq {
-    0% { height: 4px; }
-    100% { height: 16px; }
-  }
-
-  .loop-row .name { font-size: 15px; font-weight: 500; }
-  .loop-row .chevron { color: var(--text-secondary); font-size: 18px; }
-
-  .schedule-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .schedule-row:active { background: #282828; }
-  .schedule-row .name { font-size: 15px; font-weight: 400; color: var(--text-secondary); }
-  .schedule-row .chevron { color: var(--text-secondary); font-size: 18px; }
-
-  /* Bottom Tab Bar */
-  .tab-bar {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 430px;
-    background: #111;
-    border-top: 1px solid #222;
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 0 28px;
-    z-index: 100;
-  }
-  .tab {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 4px 12px;
-  }
-  .tab.active { color: var(--accent); }
-  .tab svg { width: 24px; height: 24px; }
-
-  /* Screen detail */
-  .detail-section {
-    padding: 0 16px;
-    margin-bottom: 20px;
-  }
-  .detail-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  .detail-section-header h3 {
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
-  }
+  .loop-content-strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .loop-content-strip::-webkit-scrollbar { display:none; }
+  .loop-content-thumb { width:72px; height:72px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:28px; position:relative; cursor:pointer; transition:transform .15s; }
+  .loop-content-thumb:active { transform:scale(.92); }
+  .loop-content-thumb .item-label { position:absolute; bottom:4px; left:4px; right:4px; font-size:9px; color:#fff; text-align:center; background:rgba(0,0,0,.5); border-radius:4px; padding:1px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .loop-content-thumb.add-thumb { border:1.5px dashed var(--text-tertiary); background:transparent; font-size:22px; color:var(--text-secondary); }
 
   /* Pinned content */
-  .pinned-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-  }
-  .pinned-thumb {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #ff6b35, #ff9800);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-  }
-  .pinned-info { flex: 1; }
-  .pinned-info .name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
-  .pinned-info .time { font-size: 12px; color: var(--text-secondary); }
-  .pinned-remove {
-    width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    background: none;
-    border: 1px solid var(--text-tertiary);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  .pinned-remove:active { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .pinned-item { display:flex; align-items:center; gap:12px; background:var(--pill-bg); border-radius:12px; padding:10px 12px; margin-bottom:8px; }
+  .pinned-thumb { width:48px; height:48px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .pinned-info { flex:1; }
+  .pinned-info .name { font-size:14px; font-weight:500; margin-bottom:2px; }
+  .pinned-info .time { font-size:12px; color:var(--text-secondary); }
+  .pinned-remove { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:none; border:1px solid var(--text-tertiary); color:var(--text-secondary); cursor:pointer; font-size:14px; flex-shrink:0; }
+  .pinned-remove:active { background:var(--danger); border-color:var(--danger); color:#fff; }
 
-  /* Add content button */
-  .add-content-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: 1.5px dashed var(--text-tertiary);
-    background: none;
-    color: var(--text-secondary);
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .add-content-btn:active { border-color: var(--accent); color: var(--accent); }
+  .add-content-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px; border-radius:12px; border:1.5px dashed var(--text-tertiary); background:none; color:var(--text-secondary); font-size:15px; font-weight:500; cursor:pointer; transition:all .15s; font-family:inherit; }
+  .add-content-btn:active { border-color:var(--accent); color:var(--accent); }
 
   /* Schedule timeline */
-  .timeline {
-    position: relative;
-    padding-left: 20px;
-  }
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 7px;
-    top: 4px;
-    bottom: 4px;
-    width: 2px;
-    background: var(--card-border);
-    border-radius: 1px;
-  }
-  .timeline-item {
-    position: relative;
-    padding: 0 0 16px 20px;
-    cursor: pointer;
-  }
-  .timeline-item:last-child { padding-bottom: 0; }
-  .timeline-item::before {
-    content: '';
-    position: absolute;
-    left: -16px;
-    top: 6px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--card-border);
-    border: 2px solid var(--bg);
-  }
-  .timeline-item.now::before {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-  }
-  .timeline-item .time-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 2px;
-  }
-  .timeline-item .time-label .now-badge {
-    background: var(--accent);
-    color: #000;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    margin-left: 6px;
-    text-transform: uppercase;
-  }
-  .timeline-item .loop-name {
-    font-size: 15px;
-    font-weight: 500;
-  }
-  .timeline-item .loop-count {
-    font-size: 12px;
-    color: var(--text-tertiary);
-  }
-  .timeline-item.pinned-timeline .loop-name {
-    color: var(--orange);
-  }
-  .timeline-item.pinned-timeline::before {
-    background: var(--orange);
-  }
+  .schedule-slot { background:var(--card); border:1px solid var(--card-border); border-radius:14px; margin:0 16px 10px; overflow:hidden; cursor:pointer; transition:background .15s; }
+  .schedule-slot:active { background:#1a1a1a; }
+  .schedule-slot.now { border-color:var(--accent); }
+  .schedule-slot-header { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; }
+  .schedule-slot-header .left { display:flex; flex-direction:column; gap:2px; }
+  .schedule-slot-header .time-range { font-size:12px; color:var(--text-secondary); }
+  .schedule-slot-header .loop-name { font-size:15px; font-weight:500; }
+  .schedule-slot-header .now-badge { background:var(--accent); color:#000; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; text-transform:uppercase; }
+  .schedule-slot-header .chevron { color:var(--text-secondary); font-size:18px; transition:transform .2s; }
+  .schedule-slot.expanded .schedule-slot-header .chevron { transform:rotate(90deg); }
+  .schedule-slot-content { display:none; padding:0 16px 14px; }
+  .schedule-slot.expanded .schedule-slot-content { display:block; }
+  .schedule-slot-content .loop-content-strip { margin-top:4px; }
 
-  /* Live preview */
-  .live-preview {
-    margin: 0 16px 20px;
-    border-radius: 16px;
-    overflow: hidden;
-    position: relative;
-    aspect-ratio: 16/9;
-    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-  }
-  .live-preview-content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    text-align: center;
-  }
-  .live-preview-content .preview-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .live-preview-content .preview-sub {
-    font-size: 13px;
-    color: var(--text-secondary);
-  }
-  .live-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: var(--danger);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  /* Loop detail items with remove */
+  .loop-item { display:flex; align-items:center; gap:12px; padding:12px; background:var(--pill-bg); border-radius:12px; margin-bottom:8px; position:relative; }
+  .drag-handle { color:var(--text-tertiary); font-size:16px; cursor:grab; padding:0 4px; }
+  .item-thumb { width:44px; height:44px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .item-info { flex:1; }
+  .item-info .name { font-size:14px; font-weight:500; }
+  .item-info .type { font-size:12px; color:var(--text-secondary); }
+  .item-remove { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:none; border:1px solid var(--text-tertiary); color:var(--text-secondary); cursor:pointer; font-size:13px; flex-shrink:0; transition:all .15s; }
+  .item-remove:active { background:var(--danger); border-color:var(--danger); color:#fff; }
 
   /* Bottom sheet */
-  .bottom-sheet-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--overlay);
-    z-index: 200;
-    justify-content: center;
-    align-items: flex-end;
-  }
-  .bottom-sheet-overlay.active {
-    display: flex;
-    animation: fadeInOverlay 0.2s ease;
-  }
-  @keyframes fadeInOverlay {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .bottom-sheet {
-    width: 100%;
-    max-width: 430px;
-    background: #1A1A1A;
-    border-radius: 20px 20px 0 0;
-    padding: 12px 20px 40px;
-    animation: slideUp 0.3s ease;
-    max-height: 85vh;
-    overflow-y: auto;
-  }
-  .bottom-sheet .handle {
-    width: 36px;
-    height: 4px;
-    background: var(--text-tertiary);
-    border-radius: 2px;
-    margin: 0 auto 20px;
-  }
-  .bottom-sheet h3 {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
+  .bottom-sheet-overlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:var(--overlay); z-index:200; justify-content:center; align-items:flex-end; }
+  .bottom-sheet-overlay.active { display:flex; animation:fadeInO .2s ease; }
+  @keyframes fadeInO { from{opacity:0} to{opacity:1} }
+  .bottom-sheet { width:100%; max-width:430px; background:#1A1A1A; border-radius:20px 20px 0 0; padding:12px 20px 40px; animation:slideUp .3s ease; max-height:85vh; overflow-y:auto; }
+  .bottom-sheet .handle { width:36px; height:4px; background:var(--text-tertiary); border-radius:2px; margin:0 auto 20px; }
+  .bottom-sheet h3 { font-size:20px; font-weight:600; margin-bottom:20px; }
 
-  /* Content grid */
-  .content-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-  .content-grid-item {
-    aspect-ratio: 1;
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.15s;
-  }
-  .content-grid-item:active { transform: scale(0.95); }
-  .content-grid-item.selected {
-    outline: 2.5px solid var(--accent);
-    outline-offset: -2.5px;
-  }
-  .content-grid-item.selected::after {
-    content: '✓';
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 22px;
-    height: 22px;
-    background: var(--accent);
-    color: #000;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-  }
-  .content-grid-item .thumb {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-  }
-  .cg-1 { background: linear-gradient(135deg, #ff6b35, #ff9800); }
-  .cg-2 { background: linear-gradient(135deg, #e91e63, #9c27b0); }
-  .cg-3 { background: linear-gradient(135deg, #00bcd4, #009688); }
-  .cg-4 { background: linear-gradient(135deg, #3f51b5, #2196f3); }
-  .cg-5 { background: linear-gradient(135deg, #8bc34a, #4caf50); }
-  .cg-6 { background: linear-gradient(135deg, #ffc107, #ff9800); }
-  .cg-7 { background: linear-gradient(135deg, #795548, #9e9e9e); }
-  .cg-8 { background: linear-gradient(135deg, #607d8b, #455a64); }
-  .cg-9 { background: linear-gradient(135deg, #ff5722, #f44336); }
+  .content-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:20px; }
+  .content-grid-item { aspect-ratio:1; border-radius:12px; overflow:hidden; cursor:pointer; position:relative; transition:transform .15s; }
+  .content-grid-item:active { transform:scale(.95); }
+  .content-grid-item.selected { outline:2.5px solid var(--accent); outline-offset:-2.5px; }
+  .content-grid-item.selected::after { content:'✓'; position:absolute; top:6px; right:6px; width:22px; height:22px; background:var(--accent); color:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+  .content-grid-item .thumb { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:32px; }
+  .cg-1{background:linear-gradient(135deg,#ff6b35,#ff9800)} .cg-2{background:linear-gradient(135deg,#e91e63,#9c27b0)}
+  .cg-3{background:linear-gradient(135deg,#00bcd4,#009688)} .cg-4{background:linear-gradient(135deg,#3f51b5,#2196f3)}
+  .cg-5{background:linear-gradient(135deg,#8bc34a,#4caf50)} .cg-6{background:linear-gradient(135deg,#ffc107,#ff9800)}
+  .cg-7{background:linear-gradient(135deg,#795548,#9e9e9e)} .cg-8{background:linear-gradient(135deg,#607d8b,#455a64)}
+  .cg-9{background:linear-gradient(135deg,#ff5722,#f44336)}
 
-  /* Time picker */
-  .time-option {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-    border: 1.5px solid transparent;
-  }
-  .time-option:active { background: #282828; }
-  .time-option.selected { border-color: var(--accent); background: var(--accent-dim); }
-  .time-option .icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: var(--card);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-  .time-option .label { font-size: 15px; font-weight: 500; }
-  .time-option .sublabel { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .time-option { display:flex; align-items:center; gap:12px; padding:16px; background:var(--pill-bg); border-radius:12px; margin-bottom:8px; cursor:pointer; transition:background .15s; border:1.5px solid transparent; }
+  .time-option:active { background:#282828; }
+  .time-option.selected { border-color:var(--accent); background:var(--accent-dim); }
+  .time-option .icon { width:40px; height:40px; border-radius:10px; background:var(--card); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .time-option .label { font-size:15px; font-weight:500; }
+  .time-option .sublabel { font-size:12px; color:var(--text-secondary); margin-top:2px; }
 
-  /* Date/time inputs */
-  .datetime-row {
-    display: none;
-    gap: 8px;
-    margin-top: 12px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .datetime-row.visible { display: flex; }
-  .datetime-input {
-    flex: 1;
-    min-width: 120px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    background: var(--pill-bg);
-    border: 1px solid var(--card-border);
-    color: var(--text);
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-  }
-  .datetime-input:focus { border-color: var(--accent); }
-  .datetime-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-    width: 100%;
-  }
+  .datetime-row { display:none; gap:8px; margin-top:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .datetime-row.visible { display:flex; }
+  .datetime-input { flex:1; min-width:120px; padding:12px 14px; border-radius:10px; background:var(--pill-bg); border:1px solid var(--card-border); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+  .datetime-input:focus { border-color:var(--accent); }
+  .datetime-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; width:100%; }
 
-  /* Primary button */
-  .btn-primary {
-    width: 100%;
-    padding: 16px;
-    border-radius: 14px;
-    background: var(--accent);
-    color: #000;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-    font-family: inherit;
-  }
-  .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
-  .btn-primary:disabled { opacity: 0.4; cursor: default; }
+  .btn-primary { width:100%; padding:16px; border-radius:14px; background:var(--accent); color:#000; font-size:16px; font-weight:600; border:none; cursor:pointer; transition:opacity .15s,transform .1s; font-family:inherit; }
+  .btn-primary:active { opacity:.85; transform:scale(.98); }
+  .btn-primary:disabled { opacity:.4; cursor:default; }
+  .btn-secondary { width:100%; padding:16px; border-radius:14px; background:var(--pill-bg); color:var(--text); font-size:16px; font-weight:500; border:1px solid var(--card-border); cursor:pointer; transition:opacity .15s; font-family:inherit; margin-top:8px; }
 
-  .btn-secondary {
-    width: 100%;
-    padding: 16px;
-    border-radius: 14px;
-    background: var(--pill-bg);
-    color: var(--text);
-    font-size: 16px;
-    font-weight: 500;
-    border: 1px solid var(--card-border);
-    cursor: pointer;
-    transition: opacity 0.15s;
-    font-family: inherit;
-    margin-top: 8px;
-  }
+  .weekday-tabs { display:flex; gap:4px; padding:0 16px; margin-bottom:16px; overflow-x:auto; }
+  .weekday-tab { padding:8px 14px; border-radius:20px; font-size:13px; font-weight:500; background:var(--pill-bg); color:var(--text-secondary); cursor:pointer; border:none; white-space:nowrap; font-family:inherit; }
+  .weekday-tab.active { background:var(--accent); color:#000; }
 
-  /* Loop detail */
-  .loop-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    margin-bottom: 8px;
-  }
-  .loop-item .drag-handle {
-    color: var(--text-tertiary);
-    font-size: 16px;
-    cursor: grab;
-    padding: 0 4px;
-  }
-  .loop-item .item-thumb {
-    width: 44px;
-    height: 44px;
-    border-radius: 8px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-  }
-  .loop-item .item-info { flex: 1; }
-  .loop-item .item-info .name { font-size: 14px; font-weight: 500; }
-  .loop-item .item-info .type { font-size: 12px; color: var(--text-secondary); }
+  .schedule-block { display:flex; align-items:center; gap:12px; background:var(--pill-bg); border-radius:12px; padding:14px 16px; margin:0 16px 8px; cursor:pointer; transition:background .15s; }
+  .schedule-block:active { background:#282828; }
+  .schedule-block .time-range { font-size:13px; color:var(--text-secondary); min-width:90px; }
+  .schedule-block .loop-name { font-size:15px; font-weight:500; flex:1; }
+  .schedule-block .chevron { color:var(--text-secondary); }
+  .add-slot-btn { display:flex; align-items:center; justify-content:center; gap:8px; margin:8px 16px 0; padding:14px; border-radius:12px; border:1.5px dashed var(--text-tertiary); background:none; color:var(--text-secondary); font-size:14px; cursor:pointer; width:calc(100% - 32px); font-family:inherit; }
+  .divider { height:1px; background:var(--card-border); margin:16px 0; }
 
-  /* Schedule weekview */
-  .weekday-tabs {
-    display: flex;
-    gap: 4px;
-    padding: 0 16px;
-    margin-bottom: 16px;
-    overflow-x: auto;
-  }
-  .weekday-tab {
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--pill-bg);
-    color: var(--text-secondary);
-    cursor: pointer;
-    border: none;
-    white-space: nowrap;
-    font-family: inherit;
-  }
-  .weekday-tab.active {
-    background: var(--accent);
-    color: #000;
-  }
+  .success-check { width:80px; height:80px; border-radius:50%; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; margin:40px auto 20px; font-size:36px; }
+  .success-text { text-align:center; font-size:18px; font-weight:600; margin-bottom:8px; }
+  .success-sub { text-align:center; font-size:14px; color:var(--text-secondary); margin-bottom:32px; }
 
-  /* Edit schedule */
-  .schedule-block {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--pill-bg);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin: 0 16px 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .schedule-block:active { background: #282828; }
-  .schedule-block .time-range {
-    font-size: 13px;
-    color: var(--text-secondary);
-    min-width: 90px;
-  }
-  .schedule-block .loop-name {
-    font-size: 15px;
-    font-weight: 500;
-    flex: 1;
-  }
-  .schedule-block .chevron {
-    color: var(--text-secondary);
-  }
+  .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--accent); color:#000; padding:12px 24px; border-radius:12px; font-size:14px; font-weight:600; z-index:300; opacity:0; transition:opacity .3s; pointer-events:none; }
+  .toast.show { opacity:1; }
 
-  .add-slot-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin: 8px 16px 0;
-    padding: 14px;
-    border-radius: 12px;
-    border: 1.5px dashed var(--text-tertiary);
-    background: none;
-    color: var(--text-secondary);
-    font-size: 14px;
-    cursor: pointer;
-    width: calc(100% - 32px);
-    font-family: inherit;
-  }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent);
-    color: #000;
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    z-index: 300;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-
-  /* Offline card dimming */
-  .card.offline { opacity: 0.5; }
-  .card.offline .screen-card-header h2 { color: var(--text-secondary); }
-
-  /* FAB */
-  .fab {
-    position: fixed;
-    bottom: 100px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: var(--accent);
-    color: #000;
-    font-size: 28px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(0,200,83,0.3);
-    border: none;
-    z-index: 50;
-    transition: transform 0.15s;
-  }
-  .fab:active { transform: scale(0.9); }
-  .fab.visible { display: flex; }
-
-  /* Divider */
-  .divider {
-    height: 1px;
-    background: var(--card-border);
-    margin: 16px 0;
-  }
-
-  /* Section label in detail */
-  .section-label {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--text-tertiary);
-    padding: 0 16px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .section-label .pin-icon { color: var(--orange); }
-
-  /* Success state */
-  .success-check {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: var(--accent-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 40px auto 20px;
-    font-size: 36px;
-  }
-  .success-text {
-    text-align: center;
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-  .success-sub {
-    text-align: center;
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 32px;
-  }
+  .empty-pinned-msg { font-size:13px; color:var(--text-tertiary); text-align:center; padding:8px 0 12px; }
 </style>
 </head>
 <body>
@@ -803,14 +214,12 @@
       <h2>Bar One</h2>
       <span class="dots" onclick="event.stopPropagation()">•••</span>
     </div>
-    <div class="status">
-      <span class="dot-online"></span> Online
-    </div>
+    <div class="status"><span class="dot-online"></span> Online</div>
     <div class="currently-playing-label">Currently playing</div>
     <div class="loop-row">
       <div class="loop-row-left">
         <div class="eq-icon"><span></span><span></span><span></span><span></span></div>
-        <span class="name">Default loop</span>
+        <span class="name">Happy Hour loop</span>
       </div>
       <span class="chevron">›</span>
     </div>
@@ -825,9 +234,7 @@
       <h2>Bar Two</h2>
       <span class="dots" onclick="event.stopPropagation()">•••</span>
     </div>
-    <div class="status">
-      <span class="dot-online"></span> Online
-    </div>
+    <div class="status"><span class="dot-online"></span> Online</div>
     <div class="currently-playing-label">Currently playing</div>
     <div class="loop-row">
       <div class="loop-row-left">
@@ -847,13 +254,11 @@
       <h2>Dancefloor</h2>
       <span class="dots" onclick="event.stopPropagation()">•••</span>
     </div>
-    <div class="status">
-      <span class="dot-offline"></span> Offline
-    </div>
+    <div class="status"><span class="dot-offline"></span> Offline</div>
   </div>
 </div>
 
-<!-- ==================== SCREEN 2: SCREEN DETAIL (Bar One) ==================== -->
+<!-- ==================== SCREEN 2: BAR ONE DETAIL ==================== -->
 <div class="screen" id="screen-detail">
   <div class="header">
     <button class="header-back" onclick="navigateTo('screen-onair')">
@@ -863,18 +268,32 @@
     <span class="dots" style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
   </div>
 
-  <div style="padding:0 16px 8px">
+  <div style="padding:0 16px 12px">
     <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">Bar One</h1>
     <div class="status"><span class="dot-online"></span> Online</div>
   </div>
 
-  <!-- Live Preview -->
-  <div class="live-preview">
-    <span class="live-badge">● Live</span>
-    <div class="live-preview-content">
-      <div class="preview-title" style="font-size:28px">🍸</div>
-      <div class="preview-title">Cocktail O'clock</div>
-      <div class="preview-sub">Happy Hour loop · Slide 3/8</div>
+  <!-- Now Playing: shows loop content inline -->
+  <div class="section-label">
+    <span style="color:var(--accent)">▶</span> Now playing
+  </div>
+  <div class="now-playing-card">
+    <div class="now-playing-header">
+      <div class="left">
+        <div class="eq-icon"><span></span><span></span><span></span><span></span></div>
+        <span class="loop-title">Happy Hour loop</span>
+      </div>
+      <button class="edit-btn" onclick="navigateTo('screen-loop-detail')">Edit</button>
+    </div>
+    <div class="loop-content-strip">
+      <div class="loop-content-thumb cg-1"><span>🍹</span><div class="item-label">Cocktail O'clock</div></div>
+      <div class="loop-content-thumb cg-2"><span>🎶</span><div class="item-label">Live Music</div></div>
+      <div class="loop-content-thumb cg-3"><span>🍺</span><div class="item-label">Beer Menu</div></div>
+      <div class="loop-content-thumb cg-4"><span>🎉</span><div class="item-label">Friday Deals</div></div>
+      <div class="loop-content-thumb cg-5"><span>🥂</span><div class="item-label">Wine Special</div></div>
+      <div class="loop-content-thumb cg-6"><span>🌮</span><div class="item-label">Taco Tuesday</div></div>
+      <div class="loop-content-thumb cg-7"><span>🏈</span><div class="item-label">Game Night</div></div>
+      <div class="loop-content-thumb cg-9"><span>🎤</span><div class="item-label">Karaoke</div></div>
     </div>
   </div>
 
@@ -882,46 +301,95 @@
   <div class="section-label"><span class="pin-icon">📌</span> Pinned content</div>
   <div class="detail-section" id="pinned-section">
     <div class="pinned-item" id="pinned-birthday" style="display:none">
-      <div class="pinned-thumb">🎂</div>
+      <div class="pinned-thumb" style="background:linear-gradient(135deg,#795548,#9e9e9e)">🎂</div>
       <div class="pinned-info">
         <div class="name">Lisa's Birthday</div>
         <div class="time">Thu 27 Mar, 16:00–19:00</div>
       </div>
       <button class="pinned-remove" onclick="removePinned()">✕</button>
     </div>
-    <button class="add-content-btn" onclick="openAddContent()">
-      <span style="font-size:18px">+</span> Add content to screen
+    <p class="empty-pinned-msg" id="empty-pinned">No pinned content</p>
+    <button class="add-content-btn" onclick="openAddContent('bar-one')">
+      <span style="font-size:18px">+</span> Pin content to screen
     </button>
   </div>
 
-  <!-- Today's Schedule -->
+  <!-- Today's Schedule with expandable loops -->
   <div class="section-label">📅 Today's schedule</div>
   <div class="detail-section">
-    <div class="timeline">
-      <div class="timeline-item">
-        <div class="time-label">06:00 – 11:00</div>
-        <div class="loop-name">Morning loop</div>
-        <div class="loop-count">4 items</div>
+    <div class="schedule-slot" onclick="toggleSlot(this)">
+      <div class="schedule-slot-header">
+        <div class="left">
+          <span class="time-range">06:00 – 11:00</span>
+          <span class="loop-name">Morning loop</span>
+        </div>
+        <span class="chevron">›</span>
       </div>
-      <div class="timeline-item">
-        <div class="time-label">11:00 – 16:00</div>
-        <div class="loop-name">Lunch loop</div>
-        <div class="loop-count">6 items</div>
+      <div class="schedule-slot-content">
+        <div class="loop-content-strip">
+          <div class="loop-content-thumb cg-8"><span>☕</span><div class="item-label">Coffee</div></div>
+          <div class="loop-content-thumb cg-5"><span>🥐</span><div class="item-label">Breakfast</div></div>
+          <div class="loop-content-thumb cg-3"><span>📰</span><div class="item-label">News</div></div>
+          <div class="loop-content-thumb cg-6"><span>🌅</span><div class="item-label">Welcome</div></div>
+        </div>
       </div>
-      <div class="timeline-item now" onclick="navigateTo('screen-loop-detail')">
-        <div class="time-label">16:00 – 18:00 <span class="now-badge">Now</span></div>
-        <div class="loop-name">Happy Hour loop</div>
-        <div class="loop-count">8 items</div>
+    </div>
+
+    <div class="schedule-slot" onclick="toggleSlot(this)">
+      <div class="schedule-slot-header">
+        <div class="left">
+          <span class="time-range">11:00 – 16:00</span>
+          <span class="loop-name">Lunch loop</span>
+        </div>
+        <span class="chevron">›</span>
       </div>
-      <div class="timeline-item pinned-timeline" id="pinned-timeline-item" style="display:none">
-        <div class="time-label">16:00 – 19:00</div>
-        <div class="loop-name">📌 Lisa's Birthday</div>
-        <div class="loop-count">Pinned content</div>
+      <div class="schedule-slot-content">
+        <div class="loop-content-strip">
+          <div class="loop-content-thumb cg-6"><span>🍔</span><div class="item-label">Burgers</div></div>
+          <div class="loop-content-thumb cg-1"><span>🥗</span><div class="item-label">Salads</div></div>
+          <div class="loop-content-thumb cg-3"><span>🍝</span><div class="item-label">Pasta</div></div>
+          <div class="loop-content-thumb cg-4"><span>🥤</span><div class="item-label">Drinks</div></div>
+          <div class="loop-content-thumb cg-5"><span>🍰</span><div class="item-label">Dessert</div></div>
+          <div class="loop-content-thumb cg-2"><span>📋</span><div class="item-label">Today's Special</div></div>
+        </div>
       </div>
-      <div class="timeline-item">
-        <div class="time-label">18:00 – 02:00</div>
-        <div class="loop-name">Evening loop</div>
-        <div class="loop-count">10 items</div>
+    </div>
+
+    <div class="schedule-slot now" onclick="toggleSlot(this)">
+      <div class="schedule-slot-header">
+        <div class="left">
+          <span class="time-range">16:00 – 18:00 <span class="now-badge" style="margin-left:4px">Now</span></span>
+          <span class="loop-name">Happy Hour loop</span>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="schedule-slot-content">
+        <div class="loop-content-strip">
+          <div class="loop-content-thumb cg-1"><span>🍹</span><div class="item-label">Cocktails</div></div>
+          <div class="loop-content-thumb cg-2"><span>🎶</span><div class="item-label">Live Music</div></div>
+          <div class="loop-content-thumb cg-3"><span>🍺</span><div class="item-label">Beer Menu</div></div>
+          <div class="loop-content-thumb cg-4"><span>🎉</span><div class="item-label">Deals</div></div>
+          <div class="loop-content-thumb cg-5"><span>🥂</span><div class="item-label">Wine</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="schedule-slot" onclick="toggleSlot(this)">
+      <div class="schedule-slot-header">
+        <div class="left">
+          <span class="time-range">18:00 – 02:00</span>
+          <span class="loop-name">Evening loop</span>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="schedule-slot-content">
+        <div class="loop-content-strip">
+          <div class="loop-content-thumb cg-9"><span>🎤</span><div class="item-label">Karaoke</div></div>
+          <div class="loop-content-thumb cg-4"><span>🍸</span><div class="item-label">Cocktails</div></div>
+          <div class="loop-content-thumb cg-2"><span>💃</span><div class="item-label">DJ Night</div></div>
+          <div class="loop-content-thumb cg-1"><span>🔥</span><div class="item-label">Specials</div></div>
+          <div class="loop-content-thumb cg-6"><span>🌙</span><div class="item-label">Late Night</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -931,7 +399,94 @@
   </div>
 </div>
 
-<!-- ==================== SCREEN 3: LOOP DETAIL ==================== -->
+<!-- ==================== SCREEN 2b: BAR TWO DETAIL ==================== -->
+<div class="screen" id="screen-detail-2">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('screen-onair')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      On Air
+    </button>
+    <span class="dots" style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
+  </div>
+
+  <div style="padding:0 16px 12px">
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:4px">Bar Two</h1>
+    <div class="status"><span class="dot-online"></span> Online</div>
+  </div>
+
+  <!-- Now Playing -->
+  <div class="section-label">
+    <span style="color:var(--accent)">▶</span> Now playing
+  </div>
+  <div class="now-playing-card">
+    <div class="now-playing-header">
+      <div class="left">
+        <div class="eq-icon"><span></span><span></span><span></span><span></span></div>
+        <span class="loop-title">Weekend loop</span>
+      </div>
+      <button class="edit-btn" onclick="navigateTo('screen-loop-detail-2')">Edit</button>
+    </div>
+    <div class="loop-content-strip" id="bar2-loop-strip">
+      <div class="loop-content-thumb cg-4" data-name="Aperol Spritz"><span>🍊</span><div class="item-label">Aperol Spritz</div></div>
+      <div class="loop-content-thumb cg-2" data-name="DJ Saturday"><span>🎧</span><div class="item-label">DJ Saturday</div></div>
+      <div class="loop-content-thumb cg-5" data-name="Brunch Menu"><span>🥞</span><div class="item-label">Brunch Menu</div></div>
+      <div class="loop-content-thumb cg-9" data-name="Sunday Roast"><span>🍖</span><div class="item-label">Sunday Roast</div></div>
+      <div class="loop-content-thumb cg-3" data-name="Quiz Night"><span>🧠</span><div class="item-label">Quiz Night</div></div>
+    </div>
+  </div>
+
+  <!-- Pinned Content -->
+  <div class="section-label"><span class="pin-icon">📌</span> Pinned content</div>
+  <div class="detail-section">
+    <p class="empty-pinned-msg">No pinned content</p>
+    <button class="add-content-btn" onclick="openAddContent('bar-two')">
+      <span style="font-size:18px">+</span> Pin content to screen
+    </button>
+  </div>
+
+  <!-- Today's Schedule -->
+  <div class="section-label">📅 Today's schedule</div>
+  <div class="detail-section">
+    <div class="schedule-slot" onclick="toggleSlot(this)">
+      <div class="schedule-slot-header">
+        <div class="left">
+          <span class="time-range">10:00 – 15:00</span>
+          <span class="loop-name">Brunch loop</span>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="schedule-slot-content">
+        <div class="loop-content-strip">
+          <div class="loop-content-thumb cg-5"><span>🥞</span><div class="item-label">Pancakes</div></div>
+          <div class="loop-content-thumb cg-6"><span>🥐</span><div class="item-label">Pastries</div></div>
+          <div class="loop-content-thumb cg-1"><span>🍳</span><div class="item-label">Eggs</div></div>
+          <div class="loop-content-thumb cg-3"><span>🧃</span><div class="item-label">Juices</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="schedule-slot now" onclick="toggleSlot(this)">
+      <div class="schedule-slot-header">
+        <div class="left">
+          <span class="time-range">15:00 – 02:00 <span class="now-badge" style="margin-left:4px">Now</span></span>
+          <span class="loop-name">Weekend loop</span>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+      <div class="schedule-slot-content">
+        <div class="loop-content-strip">
+          <div class="loop-content-thumb cg-4"><span>🍊</span><div class="item-label">Aperol</div></div>
+          <div class="loop-content-thumb cg-2"><span>🎧</span><div class="item-label">DJ</div></div>
+          <div class="loop-content-thumb cg-5"><span>🥞</span><div class="item-label">Brunch</div></div>
+          <div class="loop-content-thumb cg-9"><span>🍖</span><div class="item-label">Roast</div></div>
+          <div class="loop-content-thumb cg-3"><span>🧠</span><div class="item-label">Quiz</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 3: LOOP DETAIL (Bar One - Happy Hour) ==================== -->
 <div class="screen" id="screen-loop-detail">
   <div class="header">
     <button class="header-back" onclick="navigateTo('screen-detail')">
@@ -940,79 +495,45 @@
     </button>
     <span class="dots" style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
   </div>
-
   <div style="padding:0 16px 4px">
     <h1 style="font-size:22px;font-weight:700;margin-bottom:2px">Happy Hour loop</h1>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">8 items · Playing now</p>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">8 items · Playing now on Bar One</p>
   </div>
+  <div style="padding:0 16px" id="loop1-items">
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-1"><span>🍹</span></div><div class="item-info"><div class="name">Cocktail O'clock</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-2"><span>🎶</span></div><div class="item-info"><div class="name">Live Music Tonight</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-3"><span>🍺</span></div><div class="item-info"><div class="name">Draft Beer Menu</div><div class="type">Menu</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-4"><span>🎉</span></div><div class="item-info"><div class="name">Friday Deals</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-5"><span>🥂</span></div><div class="item-info"><div class="name">Wine Special</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-6"><span>🌮</span></div><div class="item-info"><div class="name">Taco Tuesday</div><div class="type">Video</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-7"><span>🏈</span></div><div class="item-info"><div class="name">Game Night</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-9"><span>🎤</span></div><div class="item-info"><div class="name">Karaoke Wednesday</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <button class="add-content-btn" style="margin-top:4px" onclick="openAddToLoop('loop1')">
+      <span style="font-size:18px">+</span> Add content to loop
+    </button>
+  </div>
+</div>
 
-  <div style="padding:0 16px">
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-1"><span>🍹</span></div>
-      <div class="item-info">
-        <div class="name">Cocktail O'clock</div>
-        <div class="type">Image</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-2"><span>🎶</span></div>
-      <div class="item-info">
-        <div class="name">Live Music Tonight</div>
-        <div class="type">Image</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-3"><span>🍺</span></div>
-      <div class="item-info">
-        <div class="name">Draft Beer Menu</div>
-        <div class="type">Menu</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-4"><span>🎉</span></div>
-      <div class="item-info">
-        <div class="name">Friday Deals</div>
-        <div class="type">Image</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-5"><span>🥂</span></div>
-      <div class="item-info">
-        <div class="name">Wine Special</div>
-        <div class="type">Image</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-6"><span>🌮</span></div>
-      <div class="item-info">
-        <div class="name">Taco Tuesday</div>
-        <div class="type">Video</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-7"><span>🏈</span></div>
-      <div class="item-info">
-        <div class="name">Game Night</div>
-        <div class="type">Image</div>
-      </div>
-    </div>
-    <div class="loop-item">
-      <span class="drag-handle">⠿</span>
-      <div class="item-thumb cg-9"><span>🎤</span></div>
-      <div class="item-info">
-        <div class="name">Karaoke Wednesday</div>
-        <div class="type">Image</div>
-      </div>
-    </div>
-
-    <button class="add-content-btn" style="margin-top:8px" onclick="showToast('Add to loop – coming soon')">
+<!-- ==================== SCREEN 3b: LOOP DETAIL (Bar Two - Weekend) ==================== -->
+<div class="screen" id="screen-loop-detail-2">
+  <div class="header">
+    <button class="header-back" onclick="navigateTo('screen-detail-2')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Bar Two
+    </button>
+    <span class="dots" style="font-size:20px;color:var(--text-secondary);cursor:pointer">•••</span>
+  </div>
+  <div style="padding:0 16px 4px">
+    <h1 style="font-size:22px;font-weight:700;margin-bottom:2px">Weekend loop</h1>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px" id="loop2-count">5 items · Playing now on Bar Two</p>
+  </div>
+  <div style="padding:0 16px" id="loop2-items">
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-4"><span>🍊</span></div><div class="item-info"><div class="name">Aperol Spritz</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-2"><span>🎧</span></div><div class="item-info"><div class="name">DJ Saturday</div><div class="type">Video</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-5"><span>🥞</span></div><div class="item-info"><div class="name">Brunch Menu</div><div class="type">Menu</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-9"><span>🍖</span></div><div class="item-info"><div class="name">Sunday Roast</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <div class="loop-item"><span class="drag-handle">⠿</span><div class="item-thumb cg-3"><span>🧠</span></div><div class="item-info"><div class="name">Quiz Night</div><div class="type">Image</div></div><button class="item-remove" onclick="removeLoopItem(this)">✕</button></div>
+    <button class="add-content-btn" style="margin-top:4px" onclick="openAddToLoop('loop2')">
       <span style="font-size:18px">+</span> Add content to loop
     </button>
   </div>
@@ -1027,11 +548,9 @@
     </button>
     <span style="font-size:14px;color:var(--accent);cursor:pointer;font-weight:500" onclick="showToast('Saved!')">Save</span>
   </div>
-
   <div style="padding:0 16px 12px">
     <h1 style="font-size:22px;font-weight:700">Schedule</h1>
   </div>
-
   <div class="weekday-tabs">
     <button class="weekday-tab" onclick="selectDay(this)">Mon</button>
     <button class="weekday-tab" onclick="selectDay(this)">Tue</button>
@@ -1041,54 +560,25 @@
     <button class="weekday-tab" onclick="selectDay(this)">Sat</button>
     <button class="weekday-tab" onclick="selectDay(this)">Sun</button>
   </div>
-
   <div class="section-label">Time slots</div>
-
-  <div class="schedule-block">
-    <span class="time-range">06:00–11:00</span>
-    <span class="loop-name">Morning loop</span>
-    <span class="chevron">›</span>
-  </div>
-  <div class="schedule-block">
-    <span class="time-range">11:00–16:00</span>
-    <span class="loop-name">Lunch loop</span>
-    <span class="chevron">›</span>
-  </div>
-  <div class="schedule-block">
-    <span class="time-range">16:00–18:00</span>
-    <span class="loop-name">Happy Hour loop</span>
-    <span class="chevron">›</span>
-  </div>
-  <div class="schedule-block">
-    <span class="time-range">18:00–02:00</span>
-    <span class="loop-name">Evening loop</span>
-    <span class="chevron">›</span>
-  </div>
-
-  <button class="add-slot-btn" onclick="showToast('Add time slot – coming soon')">
-    + Add time slot
-  </button>
-
+  <div class="schedule-block"><span class="time-range">06:00–11:00</span><span class="loop-name">Morning loop</span><span class="chevron">›</span></div>
+  <div class="schedule-block"><span class="time-range">11:00–16:00</span><span class="loop-name">Lunch loop</span><span class="chevron">›</span></div>
+  <div class="schedule-block"><span class="time-range">16:00–18:00</span><span class="loop-name">Happy Hour loop</span><span class="chevron">›</span></div>
+  <div class="schedule-block"><span class="time-range">18:00–02:00</span><span class="loop-name">Evening loop</span><span class="chevron">›</span></div>
+  <button class="add-slot-btn" onclick="showToast('Add time slot – coming soon')">+ Add time slot</button>
   <div style="padding:20px 16px 0">
     <div class="divider"></div>
     <div class="section-label" style="padding:0;margin-top:16px">Default loop</div>
-    <p style="font-size:13px;color:var(--text-secondary);padding:0 0 12px">
-      Plays when no other loop is scheduled
-    </p>
-    <div class="schedule-block" style="margin:0">
-      <span class="loop-name">Default loop</span>
-      <span class="chevron">›</span>
-    </div>
+    <p style="font-size:13px;color:var(--text-secondary);padding:0 0 12px">Plays when no other loop is scheduled</p>
+    <div class="schedule-block" style="margin:0"><span class="loop-name">Default loop</span><span class="chevron">›</span></div>
   </div>
 </div>
 
-<!-- ==================== ADD CONTENT BOTTOM SHEET ==================== -->
+<!-- ==================== BOTTOM SHEET: PIN CONTENT ==================== -->
 <div class="bottom-sheet-overlay" id="sheet-add-content">
   <div class="bottom-sheet">
     <div class="handle"></div>
-    <h3>Add content to screen</h3>
-
-    <!-- Step 1: Pick content -->
+    <h3 id="sheet-title">Pin content to screen</h3>
     <div id="add-step-1">
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Choose from your library</p>
       <div class="content-grid">
@@ -1103,29 +593,18 @@
         <div class="content-grid-item cg-9" onclick="selectContent(this)"><div class="thumb">🎤</div></div>
       </div>
       <button class="btn-primary" id="btn-next-step" disabled onclick="goToStep2()">Next</button>
-      <button class="btn-secondary" onclick="closeAddContent()">Cancel</button>
+      <button class="btn-secondary" onclick="closeSheet()">Cancel</button>
     </div>
-
-    <!-- Step 2: Choose timing -->
     <div id="add-step-2" style="display:none">
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">When should this be shown?</p>
-
-      <div class="time-option selected" onclick="selectTimeOption(this, 'now')">
+      <div class="time-option selected" onclick="selectTimeOption(this,'now')">
         <div class="icon">⚡</div>
-        <div>
-          <div class="label">Show now</div>
-          <div class="sublabel">Starts immediately, runs until you remove it</div>
-        </div>
+        <div><div class="label">Show now</div><div class="sublabel">Starts immediately, runs until you remove it</div></div>
       </div>
-
-      <div class="time-option" onclick="selectTimeOption(this, 'scheduled')">
+      <div class="time-option" onclick="selectTimeOption(this,'scheduled')">
         <div class="icon">📅</div>
-        <div>
-          <div class="label">Schedule for later</div>
-          <div class="sublabel">Pick a date and time range</div>
-        </div>
+        <div><div class="label">Schedule for later</div><div class="sublabel">Pick a date and time range</div></div>
       </div>
-
       <div class="datetime-row" id="datetime-picker">
         <div class="datetime-label">Date</div>
         <input type="date" class="datetime-input" value="2026-03-27" style="flex:2">
@@ -1134,25 +613,43 @@
         <span style="color:var(--text-secondary);display:flex;align-items:center">–</span>
         <input type="time" class="datetime-input" value="19:00">
       </div>
-
       <button class="btn-primary" style="margin-top:12px" onclick="goToStep3()">Pin to screen</button>
       <button class="btn-secondary" onclick="backToStep1()">Back</button>
     </div>
-
-    <!-- Step 3: Success -->
     <div id="add-step-3" style="display:none">
       <div class="success-check">✓</div>
-      <div class="success-text">Content pinned!</div>
+      <div class="success-text" id="success-title">Content pinned!</div>
       <div class="success-sub" id="success-msg">Showing now on Bar One</div>
-      <button class="btn-primary" onclick="finishAddContent()">Done</button>
+      <button class="btn-primary" onclick="finishSheet()">Done</button>
     </div>
   </div>
 </div>
 
-<!-- ==================== TOAST ==================== -->
+<!-- ==================== BOTTOM SHEET: ADD TO LOOP ==================== -->
+<div class="bottom-sheet-overlay" id="sheet-add-to-loop">
+  <div class="bottom-sheet">
+    <div class="handle"></div>
+    <h3>Add content to loop</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Choose from your library</p>
+    <div class="content-grid">
+      <div class="content-grid-item cg-1" onclick="selectLoopContent(this,'🍹','Cocktail Special')"><div class="thumb">🍹</div></div>
+      <div class="content-grid-item cg-2" onclick="selectLoopContent(this,'🎶','Live Music')"><div class="thumb">🎶</div></div>
+      <div class="content-grid-item cg-3" onclick="selectLoopContent(this,'🍺','Beer Menu')"><div class="thumb">🍺</div></div>
+      <div class="content-grid-item cg-4" onclick="selectLoopContent(this,'🎉','Party Night')"><div class="thumb">🎉</div></div>
+      <div class="content-grid-item cg-5" onclick="selectLoopContent(this,'🥂','Champagne')"><div class="thumb">🥂</div></div>
+      <div class="content-grid-item cg-6" onclick="selectLoopContent(this,'🌮','Taco Special')"><div class="thumb">🌮</div></div>
+      <div class="content-grid-item cg-7" onclick="selectLoopContent(this,'🎂','Celebration')"><div class="thumb">🎂</div></div>
+      <div class="content-grid-item cg-8" onclick="selectLoopContent(this,'📸','Photo Wall')"><div class="thumb">📸</div></div>
+      <div class="content-grid-item cg-9" onclick="selectLoopContent(this,'🎤','Karaoke')"><div class="thumb">🎤</div></div>
+    </div>
+    <button class="btn-primary" id="btn-add-to-loop" disabled onclick="confirmAddToLoop()">Add to loop</button>
+    <button class="btn-secondary" onclick="closeLoopSheet()">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<!-- ==================== TAB BAR ==================== -->
+<!-- TAB BAR -->
 <div class="tab-bar">
   <button class="tab" onclick="showToast('Home')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -1178,94 +675,159 @@
 
 <script>
   let selectedTimeMode = 'now';
+  let currentAddTarget = 'bar-one';
+  let currentLoopTarget = 'loop1';
+  let selectedLoopEmoji = '';
+  let selectedLoopName = '';
+  let selectedLoopClass = '';
 
-  function navigateTo(screenId) {
+  const colors = ['cg-1','cg-2','cg-3','cg-4','cg-5','cg-6','cg-7','cg-8','cg-9'];
+
+  function navigateTo(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById(screenId);
-    if (target) {
-      target.classList.add('active');
-      window.scrollTo(0, 0);
-    }
+    const t = document.getElementById(id);
+    if (t) { t.classList.add('active'); window.scrollTo(0,0); }
   }
 
-  function openAddContent() {
+  // Schedule slot expand/collapse
+  function toggleSlot(el) {
+    el.classList.toggle('expanded');
+  }
+
+  // Pin content sheet
+  function openAddContent(target) {
+    currentAddTarget = target;
     document.getElementById('sheet-add-content').classList.add('active');
-    resetAddContent();
+    resetPinSheet();
   }
-
-  function closeAddContent() {
+  function closeSheet() {
     document.getElementById('sheet-add-content').classList.remove('active');
   }
-
-  function resetAddContent() {
+  function resetPinSheet() {
     document.getElementById('add-step-1').style.display = '';
     document.getElementById('add-step-2').style.display = 'none';
     document.getElementById('add-step-3').style.display = 'none';
     document.getElementById('btn-next-step').disabled = true;
-    document.querySelectorAll('.content-grid-item').forEach(i => i.classList.remove('selected'));
+    document.querySelectorAll('#sheet-add-content .content-grid-item').forEach(i => i.classList.remove('selected'));
     document.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
     document.querySelectorAll('.time-option')[0].classList.add('selected');
     document.getElementById('datetime-picker').classList.remove('visible');
     selectedTimeMode = 'now';
   }
-
   function selectContent(el) {
-    document.querySelectorAll('.content-grid-item').forEach(i => i.classList.remove('selected'));
+    el.closest('.content-grid').querySelectorAll('.content-grid-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
     document.getElementById('btn-next-step').disabled = false;
   }
-
   function goToStep2() {
     document.getElementById('add-step-1').style.display = 'none';
     document.getElementById('add-step-2').style.display = '';
   }
-
   function backToStep1() {
     document.getElementById('add-step-1').style.display = '';
     document.getElementById('add-step-2').style.display = 'none';
   }
-
   function selectTimeOption(el, mode) {
     selectedTimeMode = mode;
     document.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
-    if (mode === 'scheduled') {
-      document.getElementById('datetime-picker').classList.add('visible');
-    } else {
-      document.getElementById('datetime-picker').classList.remove('visible');
-    }
+    document.getElementById('datetime-picker').classList.toggle('visible', mode === 'scheduled');
   }
-
   function goToStep3() {
     document.getElementById('add-step-2').style.display = 'none';
     document.getElementById('add-step-3').style.display = '';
-    if (selectedTimeMode === 'now') {
-      document.getElementById('success-msg').textContent = 'Showing now on Bar One';
-    } else {
-      document.getElementById('success-msg').textContent = 'Scheduled for Thu 27 Mar, 16:00–19:00';
-    }
+    const barName = currentAddTarget === 'bar-one' ? 'Bar One' : 'Bar Two';
+    document.getElementById('success-title').textContent = 'Content pinned!';
+    document.getElementById('success-msg').textContent = selectedTimeMode === 'now'
+      ? 'Showing now on ' + barName
+      : 'Scheduled for Thu 27 Mar, 16:00–19:00';
   }
-
-  function finishAddContent() {
-    closeAddContent();
-    if (selectedTimeMode === 'scheduled') {
+  function finishSheet() {
+    closeSheet();
+    if (currentAddTarget === 'bar-one' && selectedTimeMode === 'scheduled') {
       document.getElementById('pinned-birthday').style.display = '';
-      document.getElementById('pinned-timeline-item').style.display = '';
+      document.getElementById('empty-pinned').style.display = 'none';
     }
-    showToast('Content pinned to Bar One');
+    const barName = currentAddTarget === 'bar-one' ? 'Bar One' : 'Bar Two';
+    showToast('Content pinned to ' + barName);
   }
-
   function removePinned() {
     document.getElementById('pinned-birthday').style.display = 'none';
-    document.getElementById('pinned-timeline-item').style.display = 'none';
+    document.getElementById('empty-pinned').style.display = '';
     showToast('Content removed');
   }
 
+  // Add to loop sheet
+  function openAddToLoop(target) {
+    currentLoopTarget = target;
+    document.getElementById('sheet-add-to-loop').classList.add('active');
+    document.getElementById('btn-add-to-loop').disabled = true;
+    document.querySelectorAll('#sheet-add-to-loop .content-grid-item').forEach(i => i.classList.remove('selected'));
+    selectedLoopEmoji = '';
+    selectedLoopName = '';
+    selectedLoopClass = '';
+  }
+  function closeLoopSheet() {
+    document.getElementById('sheet-add-to-loop').classList.remove('active');
+  }
+  function selectLoopContent(el, emoji, name) {
+    el.closest('.content-grid').querySelectorAll('.content-grid-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('btn-add-to-loop').disabled = false;
+    selectedLoopEmoji = emoji;
+    selectedLoopName = name;
+    // get the color class
+    selectedLoopClass = Array.from(el.classList).find(c => c.startsWith('cg-')) || 'cg-1';
+  }
+  function confirmAddToLoop() {
+    const containerId = currentLoopTarget === 'loop1' ? 'loop1-items' : 'loop2-items';
+    const container = document.getElementById(containerId);
+    const btn = container.querySelector('.add-content-btn');
+
+    const item = document.createElement('div');
+    item.className = 'loop-item';
+    item.style.animation = 'fadeIn .3s ease';
+    item.innerHTML = '<span class="drag-handle">⠿</span>'
+      + '<div class="item-thumb ' + selectedLoopClass + '"><span>' + selectedLoopEmoji + '</span></div>'
+      + '<div class="item-info"><div class="name">' + selectedLoopName + '</div><div class="type">Image</div></div>'
+      + '<button class="item-remove" onclick="removeLoopItem(this)">✕</button>';
+    container.insertBefore(item, btn);
+
+    updateLoopCount(currentLoopTarget);
+    closeLoopSheet();
+    showToast(selectedLoopName + ' added to loop');
+  }
+
+  function removeLoopItem(btn) {
+    const item = btn.closest('.loop-item');
+    const container = item.parentElement;
+    const name = item.querySelector('.item-info .name').textContent;
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(60px)';
+    item.style.transition = 'all .25s ease';
+    setTimeout(() => {
+      item.remove();
+      // figure out which loop
+      if (container.id === 'loop1-items') updateLoopCount('loop1');
+      else if (container.id === 'loop2-items') updateLoopCount('loop2');
+      showToast(name + ' removed');
+    }, 250);
+  }
+
+  function updateLoopCount(loop) {
+    if (loop === 'loop2') {
+      const count = document.querySelectorAll('#loop2-items .loop-item').length;
+      document.getElementById('loop2-count').textContent = count + ' items · Playing now on Bar Two';
+    }
+  }
+
+  // Schedule day tabs
   function selectDay(el) {
     document.querySelectorAll('.weekday-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
   }
 
+  // Toast
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -1273,9 +835,9 @@
     setTimeout(() => t.classList.remove('show'), 2000);
   }
 
-  document.getElementById('sheet-add-content').addEventListener('click', function(e) {
-    if (e.target === this) closeAddContent();
-  });
+  // Close sheets on overlay tap
+  document.getElementById('sheet-add-content').addEventListener('click', function(e) { if (e.target === this) closeSheet(); });
+  document.getElementById('sheet-add-to-loop').addEventListener('click', function(e) { if (e.target === this) closeLoopSheet(); });
 </script>
 </body>
 </html>
