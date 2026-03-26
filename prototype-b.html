@@ -166,7 +166,7 @@
 <body>
 
 <!-- ==================== SCREEN 1: LIBRARY ==================== -->
-<div class="screen active" id="screen-library">
+<div class="screen" id="screen-library">
   <div class="header">
     <h1>Library</h1>
     <div class="header-right">
@@ -277,7 +277,7 @@
 </div>
 
 <!-- ==================== SCREEN 2: SCREENS (Default mode) ==================== -->
-<div class="screen" id="screen-screens">
+<div class="screen active" id="screen-screens">
   <div class="header">
     <h1>Screens</h1>
     <div class="header-right">
@@ -643,11 +643,11 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Home
   </button>
-  <button class="tab" id="tab-screens" onclick="navigateTo('screen-screens');setActiveTab(this)">
+  <button class="tab active" id="tab-screens" onclick="navigateTo('screen-screens');setActiveTab(this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Screens
   </button>
-  <button class="tab active" id="tab-library" onclick="navigateTo('screen-library');setActiveTab(this)">
+  <button class="tab" id="tab-library" onclick="navigateTo('screen-library');setActiveTab(this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     Library
   </button>
