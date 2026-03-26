@@ -195,6 +195,23 @@
   .toast.show { opacity:1; }
 
   .empty-pinned-msg { font-size:13px; color:var(--text-tertiary); text-align:center; padding:8px 0 12px; }
+
+  /* Fixed schedule blocks */
+  .sched-fixed-block { background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+  .sched-fixed-time { font-size:14px; font-weight:600; margin-bottom:8px; display:flex; align-items:baseline; gap:8px; }
+  .sched-fixed-range { font-size:12px; font-weight:400; color:var(--text-secondary); }
+  .sched-fixed-select { display:flex; align-items:center; justify-content:space-between; background:var(--pill-bg); border-radius:10px; padding:12px 14px; cursor:pointer; transition:background .15s; }
+  .sched-fixed-select:active { background:#282828; }
+  .sched-selected-loop { font-size:15px; font-weight:500; }
+  .sched-chevron { color:var(--text-secondary); font-size:14px; }
+
+  /* Loop picker options in bottom sheet */
+  .loop-picker-option { display:flex; align-items:center; gap:12px; padding:14px 16px; background:var(--pill-bg); border-radius:12px; margin-bottom:8px; cursor:pointer; transition:background .15s; border:1.5px solid transparent; }
+  .loop-picker-option:active { background:#282828; }
+  .loop-picker-option.selected { border-color:var(--accent); background:var(--accent-dim); }
+  .loop-picker-option .lp-name { font-size:15px; font-weight:500; }
+  .loop-picker-option .lp-count { font-size:12px; color:var(--text-secondary); }
+  .loop-picker-option .lp-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -550,6 +567,7 @@
   </div>
   <div style="padding:0 16px 12px">
     <h1 style="font-size:22px;font-weight:700">Schedule</h1>
+    <p style="font-size:13px;color:var(--text-secondary);margin-top:4px">Choose which loop plays at each time</p>
   </div>
   <div class="weekday-tabs">
     <button class="weekday-tab" onclick="selectDay(this)">Mon</button>
@@ -560,17 +578,51 @@
     <button class="weekday-tab" onclick="selectDay(this)">Sat</button>
     <button class="weekday-tab" onclick="selectDay(this)">Sun</button>
   </div>
-  <div class="section-label">Time slots</div>
-  <div class="schedule-block"><span class="time-range">06:00–11:00</span><span class="loop-name">Morning loop</span><span class="chevron">›</span></div>
-  <div class="schedule-block"><span class="time-range">11:00–16:00</span><span class="loop-name">Lunch loop</span><span class="chevron">›</span></div>
-  <div class="schedule-block"><span class="time-range">16:00–18:00</span><span class="loop-name">Happy Hour loop</span><span class="chevron">›</span></div>
-  <div class="schedule-block"><span class="time-range">18:00–02:00</span><span class="loop-name">Evening loop</span><span class="chevron">›</span></div>
-  <button class="add-slot-btn" onclick="showToast('Add time slot – coming soon')">+ Add time slot</button>
-  <div style="padding:20px 16px 0">
+
+  <div style="padding:0 16px">
+    <div class="sched-fixed-block">
+      <div class="sched-fixed-time">Morning <span class="sched-fixed-range">06:00 – 11:00</span></div>
+      <div class="sched-fixed-select" onclick="openLoopPicker(this)">
+        <span class="sched-selected-loop">Morning loop</span>
+        <span class="sched-chevron">▾</span>
+      </div>
+    </div>
+    <div class="sched-fixed-block">
+      <div class="sched-fixed-time">Lunch <span class="sched-fixed-range">11:00 – 16:00</span></div>
+      <div class="sched-fixed-select" onclick="openLoopPicker(this)">
+        <span class="sched-selected-loop">Lunch loop</span>
+        <span class="sched-chevron">▾</span>
+      </div>
+    </div>
+    <div class="sched-fixed-block">
+      <div class="sched-fixed-time">Afternoon <span class="sched-fixed-range">16:00 – 18:00</span></div>
+      <div class="sched-fixed-select" onclick="openLoopPicker(this)">
+        <span class="sched-selected-loop">Happy Hour loop</span>
+        <span class="sched-chevron">▾</span>
+      </div>
+    </div>
+    <div class="sched-fixed-block">
+      <div class="sched-fixed-time">Evening <span class="sched-fixed-range">18:00 – 02:00</span></div>
+      <div class="sched-fixed-select" onclick="openLoopPicker(this)">
+        <span class="sched-selected-loop">Evening loop</span>
+        <span class="sched-chevron">▾</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:16px 16px 0">
     <div class="divider"></div>
-    <div class="section-label" style="padding:0;margin-top:16px">Default loop</div>
-    <p style="font-size:13px;color:var(--text-secondary);padding:0 0 12px">Plays when no other loop is scheduled</p>
-    <div class="schedule-block" style="margin:0"><span class="loop-name">Default loop</span><span class="chevron">›</span></div>
+    <div class="sched-fixed-block" style="border:none;padding:0;margin:0">
+      <div class="sched-fixed-time">Default <span class="sched-fixed-range">when nothing else is scheduled</span></div>
+      <div class="sched-fixed-select" onclick="openLoopPicker(this)">
+        <span class="sched-selected-loop">Default loop</span>
+        <span class="sched-chevron">▾</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:20px 16px 0;text-align:center">
+    <button style="background:none;border:none;color:var(--text-tertiary);font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline" onclick="showToast('Edit times – advanced settings')">Edit time slots</button>
   </div>
 </div>
 
@@ -644,6 +696,40 @@
     </div>
     <button class="btn-primary" id="btn-add-to-loop" disabled onclick="confirmAddToLoop()">Add to loop</button>
     <button class="btn-secondary" onclick="closeLoopSheet()">Cancel</button>
+  </div>
+</div>
+
+<!-- ==================== BOTTOM SHEET: LOOP PICKER ==================== -->
+<div class="bottom-sheet-overlay" id="sheet-loop-picker">
+  <div class="bottom-sheet">
+    <div class="handle"></div>
+    <h3>Choose loop</h3>
+    <div id="loop-picker-options">
+      <div class="loop-picker-option" onclick="pickLoop(this,'Morning loop')">
+        <div class="lp-icon cg-8">☕</div>
+        <div><div class="lp-name">Morning loop</div><div class="lp-count">4 items</div></div>
+      </div>
+      <div class="loop-picker-option" onclick="pickLoop(this,'Lunch loop')">
+        <div class="lp-icon cg-6">🍔</div>
+        <div><div class="lp-name">Lunch loop</div><div class="lp-count">6 items</div></div>
+      </div>
+      <div class="loop-picker-option" onclick="pickLoop(this,'Happy Hour loop')">
+        <div class="lp-icon cg-1">🍹</div>
+        <div><div class="lp-name">Happy Hour loop</div><div class="lp-count">8 items</div></div>
+      </div>
+      <div class="loop-picker-option" onclick="pickLoop(this,'Evening loop')">
+        <div class="lp-icon cg-9">🎤</div>
+        <div><div class="lp-name">Evening loop</div><div class="lp-count">10 items</div></div>
+      </div>
+      <div class="loop-picker-option" onclick="pickLoop(this,'Weekend loop')">
+        <div class="lp-icon cg-4">🍊</div>
+        <div><div class="lp-name">Weekend loop</div><div class="lp-count">5 items</div></div>
+      </div>
+      <div class="loop-picker-option" onclick="pickLoop(this,'Default loop')">
+        <div class="lp-icon cg-7">📺</div>
+        <div><div class="lp-name">Default loop</div><div class="lp-count">3 items</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -835,9 +921,32 @@
     setTimeout(() => t.classList.remove('show'), 2000);
   }
 
+  // Loop picker for schedule
+  let activeLoopPickerTarget = null;
+
+  function openLoopPicker(selectEl) {
+    activeLoopPickerTarget = selectEl;
+    const current = selectEl.querySelector('.sched-selected-loop').textContent;
+    document.querySelectorAll('.loop-picker-option').forEach(o => {
+      o.classList.toggle('selected', o.querySelector('.lp-name').textContent === current);
+    });
+    document.getElementById('sheet-loop-picker').classList.add('active');
+  }
+  function closeLoopPicker() {
+    document.getElementById('sheet-loop-picker').classList.remove('active');
+  }
+  function pickLoop(optionEl, loopName) {
+    if (activeLoopPickerTarget) {
+      activeLoopPickerTarget.querySelector('.sched-selected-loop').textContent = loopName;
+    }
+    closeLoopPicker();
+    showToast('Changed to ' + loopName);
+  }
+
   // Close sheets on overlay tap
   document.getElementById('sheet-add-content').addEventListener('click', function(e) { if (e.target === this) closeSheet(); });
   document.getElementById('sheet-add-to-loop').addEventListener('click', function(e) { if (e.target === this) closeLoopSheet(); });
+  document.getElementById('sheet-loop-picker').addEventListener('click', function(e) { if (e.target === this) closeLoopPicker(); });
 </script>
 </body>
 </html>
