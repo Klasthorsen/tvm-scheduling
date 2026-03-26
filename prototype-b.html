@@ -400,9 +400,21 @@
       </div>
     </div>
 
-    <div class="divider"></div>
+  </div>
 
-    <!-- Scheduled items -->
+  <!-- Quick actions: two distinct buttons -->
+  <div style="padding:0 16px;margin-bottom:16px;display:flex;gap:8px">
+    <button class="add-content-btn" style="flex:1" onclick="openAddToScreen('bar-one','always')">
+      <span style="font-size:16px">+</span> Add content
+    </button>
+    <button class="add-content-btn" style="flex:1;border-color:var(--orange);color:var(--orange)" onclick="openAddToScreen('bar-one','scheduled')">
+      <span style="font-size:16px">📅</span> Schedule
+    </button>
+  </div>
+
+  <!-- Scheduled items - own section -->
+  <div class="section-label"><span style="color:var(--orange)">📅</span> Scheduled</div>
+  <div style="padding:0 16px;margin-bottom:16px" id="bar1-scheduled">
     <div class="playing-item scheduled-item">
       <div class="p-thumb cg-7"><span>🎂</span></div>
       <div class="p-info">
@@ -413,13 +425,7 @@
         <button class="p-action" onclick="event.stopPropagation();removeScheduled(this)">✕</button>
       </div>
     </div>
-  </div>
-
-  <!-- Quick actions -->
-  <div style="padding:0 16px;margin-bottom:16px">
-    <button class="add-content-btn" onclick="openAddToScreen('bar-one')">
-      <span style="font-size:18px">+</span> Add content to this screen
-    </button>
+    <p class="empty-sched-msg" style="display:none;font-size:13px;color:var(--text-tertiary);text-align:center;padding:8px 0">No scheduled content</p>
   </div>
 
   <!-- Play collection -->
@@ -488,8 +494,21 @@
       </div>
     </div>
 
-    <div class="divider"></div>
+  </div>
 
+  <!-- Quick actions -->
+  <div style="padding:0 16px;margin-bottom:16px;display:flex;gap:8px">
+    <button class="add-content-btn" style="flex:1" onclick="openAddToScreen('bar-two','always')">
+      <span style="font-size:16px">+</span> Add content
+    </button>
+    <button class="add-content-btn" style="flex:1;border-color:var(--orange);color:var(--orange)" onclick="openAddToScreen('bar-two','scheduled')">
+      <span style="font-size:16px">📅</span> Schedule
+    </button>
+  </div>
+
+  <!-- Scheduled -->
+  <div class="section-label"><span style="color:var(--orange)">📅</span> Scheduled</div>
+  <div style="padding:0 16px;margin-bottom:16px">
     <div class="playing-item scheduled-item">
       <div class="p-thumb cg-2"><span>🎧</span></div>
       <div class="p-info">
@@ -500,12 +519,6 @@
         <button class="p-action" onclick="event.stopPropagation();removeScheduled(this)">✕</button>
       </div>
     </div>
-  </div>
-
-  <div style="padding:0 16px;margin-bottom:16px">
-    <button class="add-content-btn" onclick="openAddToScreen('bar-two')">
-      <span style="font-size:18px">+</span> Add content to this screen
-    </button>
   </div>
 
   <div class="section-label">📁 Play a collection</div>
@@ -571,7 +584,7 @@
 <div class="bottom-sheet-overlay" id="sheet-add-to-screen">
   <div class="bottom-sheet">
     <div class="handle"></div>
-    <h3>Add content to screen</h3>
+    <h3 id="sheet-add-title">Add content to screen</h3>
 
     <div id="ats-step-1">
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Choose content from your library</p>
@@ -664,6 +677,7 @@
 <script>
   let atsSchedMode = 'always';
   let atsTarget = 'bar-one';
+  let atsPresetScheduled = false;
 
   function navigateTo(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -691,10 +705,18 @@
   }
 
   // Add to screen sheet
-  function openAddToScreen(target) {
+  function openAddToScreen(target, mode) {
     atsTarget = target;
     document.getElementById('sheet-add-to-screen').classList.add('active');
     resetAtsSheet();
+    if (mode === 'scheduled') {
+      document.getElementById('sheet-add-title').textContent = 'Schedule content';
+      atsSchedMode = 'scheduled';
+      atsPresetScheduled = true;
+    } else {
+      document.getElementById('sheet-add-title').textContent = 'Add content to screen';
+      atsPresetScheduled = false;
+    }
   }
   function closeAtsSheet() {
     document.getElementById('sheet-add-to-screen').classList.remove('active');
@@ -718,6 +740,13 @@
   function atsGoStep2() {
     document.getElementById('ats-step-1').style.display = 'none';
     document.getElementById('ats-step-2').style.display = '';
+    if (atsPresetScheduled) {
+      const opts = document.querySelectorAll('.sched-option');
+      opts.forEach(o => o.classList.remove('selected'));
+      opts[1].classList.add('selected');
+      document.getElementById('ats-datetime').classList.add('visible');
+      atsSchedMode = 'scheduled';
+    }
   }
   function atsBackStep1() {
     document.getElementById('ats-step-1').style.display = '';
